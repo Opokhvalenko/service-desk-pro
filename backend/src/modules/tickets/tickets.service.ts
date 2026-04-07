@@ -1,0 +1,282 @@
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { type Prisma, TicketStatus, UserRole } from '@prisma/client';
+import { PrismaService } from '../../infrastructure/prisma/prisma.service';
+import type { AuthenticatedUser } from '../auth';
+import type {
+  AssignTicketDto,
+  ChangeStatusDto,
+  CreateCommentDto,
+  CreateTicketDto,
+  ListTicketsQueryDto,
+  UpdateTicketDto,
+} from './dto';
+import { canTransition, formatTicketNumber } from './state-machine';
+
+const TICKET_INCLUDE = {
+  createdBy: { select: { id: true, fullName: true, email: true, role: true } },
+  assignee: { select: { id: true, fullName: true, email: true, role: true } },
+} satisfies Prisma.TicketInclude;
+
+@Injectable()
+export class TicketsService {
+  constructor(private readonly prisma: PrismaService) {}
+
+  async create(dto: CreateTicketDto, user: AuthenticatedUser) {
+    const ticket = await this.prisma.ticket.create({
+      data: {
+        title: dto.title,
+        description: dto.description,
+        priority: dto.priority ?? 'MEDIUM',
+        createdById: user.id,
+      },
+      include: TICKET_INCLUDE,
+    });
+
+    await this.audit(user.id, 'Ticket', ticket.id, 'created', { title: ticket.title });
+    return this.serialize(ticket);
+  }
+
+  async list(query: ListTicketsQueryDto, user: AuthenticatedUser) {
+    const where: Prisma.TicketWhereInput = this.scopeForUser(user);
+
+    if (query.status) where.status = query.status;
+    if (query.priority) where.priority = query.priority;
+    if (query.assigneeId) where.assigneeId = query.assigneeId;
+    if (query.search) {
+      where.OR = [
+        { title: { contains: query.search, mode: 'insensitive' } },
+        { description: { contains: query.search, mode: 'insensitive' } },
+      ];
+    }
+
+    const skip = (query.page - 1) * query.pageSize;
+    const [items, total] = await Promise.all([
+      this.prisma.ticket.findMany({
+        where,
+        include: TICKET_INCLUDE,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: query.pageSize,
+      }),
+      this.prisma.ticket.count({ where }),
+    ]);
+
+    return {
+      items: items.map((t) => this.serialize(t)),
+      total,
+      page: query.page,
+      pageSize: query.pageSize,
+      totalPages: Math.ceil(total / query.pageSize),
+    };
+  }
+
+  async findOne(id: string, user: AuthenticatedUser) {
+    const ticket = await this.prisma.ticket.findUnique({
+      where: { id },
+      include: {
+        ...TICKET_INCLUDE,
+        comments: {
+          orderBy: { createdAt: 'asc' },
+          include: { author: { select: { id: true, fullName: true, role: true } } },
+        },
+      },
+    });
+    if (!ticket) throw new NotFoundException('Ticket not found');
+    this.assertCanView(ticket, user);
+
+    // Hide internal comments from requesters
+    const comments =
+      user.role === UserRole.REQUESTER
+        ? ticket.comments.filter((c) => !c.isInternal)
+        : ticket.comments;
+
+    return { ...this.serialize(ticket), comments };
+  }
+
+  async update(id: string, dto: UpdateTicketDto, user: AuthenticatedUser) {
+    const existing = await this.getOrThrow(id);
+    this.assertCanModify(existing, user);
+
+    const ticket = await this.prisma.ticket.update({
+      where: { id },
+      data: {
+        title: dto.title,
+        description: dto.description,
+        priority: dto.priority,
+      },
+      include: TICKET_INCLUDE,
+    });
+
+    await this.audit(user.id, 'Ticket', id, 'updated', { ...dto });
+    return this.serialize(ticket);
+  }
+
+  async changeStatus(id: string, dto: ChangeStatusDto, user: AuthenticatedUser) {
+    const existing = await this.getOrThrow(id);
+    this.assertCanWorkOn(existing, user);
+
+    if (existing.status === dto.status) return this.serialize(existing);
+    if (!canTransition(existing.status, dto.status)) {
+      throw new BadRequestException(`Cannot transition from ${existing.status} to ${dto.status}`);
+    }
+
+    const data: Prisma.TicketUpdateInput = { status: dto.status };
+    if (dto.status === TicketStatus.RESOLVED) data.resolvedAt = new Date();
+    if (dto.status === TicketStatus.CLOSED) data.closedAt = new Date();
+    if (dto.status === TicketStatus.REOPENED) {
+      data.resolvedAt = null;
+      data.closedAt = null;
+    }
+
+    const ticket = await this.prisma.ticket.update({
+      where: { id },
+      data,
+      include: TICKET_INCLUDE,
+    });
+
+    await this.audit(user.id, 'Ticket', id, 'status_changed', {
+      from: existing.status,
+      to: dto.status,
+    });
+    return this.serialize(ticket);
+  }
+
+  async assign(id: string, dto: AssignTicketDto, user: AuthenticatedUser) {
+    if (user.role === UserRole.REQUESTER) {
+      throw new ForbiddenException('Requesters cannot assign tickets');
+    }
+    const existing = await this.getOrThrow(id);
+
+    if (dto.assigneeId) {
+      const assignee = await this.prisma.user.findUnique({
+        where: { id: dto.assigneeId },
+        select: { id: true, role: true, isActive: true },
+      });
+      if (!assignee || !assignee.isActive) {
+        throw new BadRequestException('Assignee not found or inactive');
+      }
+      if (assignee.role === UserRole.REQUESTER) {
+        throw new BadRequestException('Cannot assign to a requester');
+      }
+    }
+
+    const ticket = await this.prisma.ticket.update({
+      where: { id },
+      data: { assigneeId: dto.assigneeId ?? null },
+      include: TICKET_INCLUDE,
+    });
+
+    await this.audit(user.id, 'Ticket', id, 'assigned', {
+      from: existing.assigneeId,
+      to: dto.assigneeId ?? null,
+    });
+    return this.serialize(ticket);
+  }
+
+  async addComment(id: string, dto: CreateCommentDto, user: AuthenticatedUser) {
+    const ticket = await this.getOrThrow(id);
+    this.assertCanView(ticket, user);
+
+    const isInternal = dto.isInternal ?? false;
+    if (isInternal && user.role === UserRole.REQUESTER) {
+      throw new ForbiddenException('Requesters cannot post internal notes');
+    }
+
+    const comment = await this.prisma.ticketComment.create({
+      data: {
+        ticketId: id,
+        authorId: user.id,
+        body: dto.body,
+        isInternal,
+      },
+      include: { author: { select: { id: true, fullName: true, role: true } } },
+    });
+
+    await this.audit(user.id, 'TicketComment', comment.id, 'created', { ticketId: id });
+    return comment;
+  }
+
+  // ── Helpers ──
+
+  private async getOrThrow(id: string) {
+    const t = await this.prisma.ticket.findUnique({ where: { id }, include: TICKET_INCLUDE });
+    if (!t) throw new NotFoundException('Ticket not found');
+    return t;
+  }
+
+  private scopeForUser(user: AuthenticatedUser): Prisma.TicketWhereInput {
+    switch (user.role) {
+      case UserRole.REQUESTER:
+        return { createdById: user.id };
+      case UserRole.AGENT:
+        return { OR: [{ assigneeId: user.id }, { assigneeId: null }] };
+      case UserRole.TEAM_LEAD:
+      case UserRole.ADMIN:
+        return {};
+      default:
+        return { id: '__never__' };
+    }
+  }
+
+  private assertCanView(
+    ticket: { createdById: string; assigneeId: string | null },
+    user: AuthenticatedUser,
+  ) {
+    if (user.role === UserRole.ADMIN || user.role === UserRole.TEAM_LEAD) return;
+    if (user.role === UserRole.REQUESTER && ticket.createdById === user.id) return;
+    if (
+      user.role === UserRole.AGENT &&
+      (ticket.assigneeId === user.id || ticket.assigneeId === null)
+    )
+      return;
+    throw new ForbiddenException('Not allowed to access this ticket');
+  }
+
+  private assertCanModify(
+    ticket: { createdById: string; status: TicketStatus },
+    user: AuthenticatedUser,
+  ) {
+    if (user.role === UserRole.ADMIN || user.role === UserRole.TEAM_LEAD) return;
+    if (
+      user.role === UserRole.REQUESTER &&
+      ticket.createdById === user.id &&
+      ticket.status === TicketStatus.NEW
+    ) {
+      return;
+    }
+    if (user.role === UserRole.AGENT) return;
+    throw new ForbiddenException('Not allowed to modify this ticket');
+  }
+
+  private assertCanWorkOn(
+    ticket: { assigneeId: string | null; createdById: string },
+    user: AuthenticatedUser,
+  ) {
+    if (user.role === UserRole.ADMIN || user.role === UserRole.TEAM_LEAD) return;
+    if (user.role === UserRole.AGENT) return;
+    // Requester може REOPEN власний CLOSED/RESOLVED
+    if (user.role === UserRole.REQUESTER && ticket.createdById === user.id) return;
+    throw new ForbiddenException('Not allowed to change status');
+  }
+
+  private async audit(
+    actorId: string | null,
+    entityType: string,
+    entityId: string,
+    action: string,
+    metadata?: Prisma.InputJsonValue,
+  ) {
+    await this.prisma.auditLog.create({
+      data: { actorId, entityType, entityId, action, metadata },
+    });
+  }
+
+  private serialize<T extends { number: number }>(ticket: T) {
+    return { ...ticket, code: formatTicketNumber(ticket.number) };
+  }
+}
