@@ -123,6 +123,8 @@ npm start
 - Swagger: http://localhost:3000/api/docs
 - Mailhog: http://localhost:8025
 
+> **Local vs Cloud:** `backend/.env.example` includes both Neon/Upstash (cloud) and docker-compose (local) connection strings. Uncomment the local block in `.env` to run fully offline against Docker.
+
 ---
 
 ## 🧪 Testing
