@@ -1,6 +1,6 @@
-import { NodeSDK } from '@opentelemetry/sdk-node';
 import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
+import { NodeSDK } from '@opentelemetry/sdk-node';
 
 export function startOtel(): NodeSDK | null {
   if (!process.env.OTEL_EXPORTER_OTLP_ENDPOINT) {

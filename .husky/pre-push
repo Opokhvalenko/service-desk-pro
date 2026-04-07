@@ -1,0 +1,10 @@
+#!/usr/bin/env sh
+# Run typecheck + tests on backend before push.
+# Skip if backend has no changes.
+
+if git diff --name-only HEAD origin/HEAD 2>/dev/null | grep -q '^backend/'; then
+  echo "🔍 Running backend typecheck + tests before push..."
+  cd backend || exit 1
+  npx tsc --noEmit || { echo "❌ TypeScript errors"; exit 1; }
+  npm test -- --passWithNoTests || { echo "❌ Tests failed"; exit 1; }
+fi
