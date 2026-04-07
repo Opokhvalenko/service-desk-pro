@@ -1,10 +1,39 @@
 #!/usr/bin/env sh
-# Run typecheck + tests on backend before push.
-# Skip if backend has no changes.
+# Run typecheck + tests on changed packages before push.
+# Compares against main to detect what changed in this branch.
 
-if git diff --name-only HEAD origin/HEAD 2>/dev/null | grep -q '^backend/'; then
-  echo "🔍 Running backend typecheck + tests before push..."
-  cd backend || exit 1
-  npx tsc --noEmit || { echo "❌ TypeScript errors"; exit 1; }
-  npm test -- --passWithNoTests || { echo "❌ Tests failed"; exit 1; }
+# Disable interactive prompts (Angular CLI, npm, etc.)
+export CI=true
+export NG_CLI_ANALYTICS=false
+export NG_FORCE_TTY=false
+
+# Determine base ref (origin/main or local main fallback)
+BASE_REF="origin/main"
+if ! git rev-parse --verify "$BASE_REF" >/dev/null 2>&1; then
+  BASE_REF="main"
+fi
+
+CHANGED=$(git diff --name-only "$BASE_REF"...HEAD 2>/dev/null)
+
+if [ -z "$CHANGED" ]; then
+  echo "ℹ️  No changes vs $BASE_REF — skipping pre-push checks."
+  exit 0
+fi
+
+# ── Backend ──
+if echo "$CHANGED" | grep -q '^backend/'; then
+  echo "🔍 Backend changed → typecheck + tests..."
+  (cd backend && npx tsc --noEmit) || { echo "❌ Backend TypeScript errors"; exit 1; }
+  (cd backend && npm test -- --passWithNoTests) || { echo "❌ Backend tests failed"; exit 1; }
+  echo "✅ Backend checks passed"
+fi
+
+# ── Frontend ──
+if echo "$CHANGED" | grep -q '^frontend/'; then
+  echo "🔍 Frontend changed → typecheck + lint + build..."
+  (cd frontend && npm run typecheck) || { echo "❌ Frontend TypeScript errors"; exit 1; }
+  (cd frontend && npm run check:ci) || { echo "❌ Frontend Biome errors"; exit 1; }
+  (cd frontend && npm run stylelint:ci) || { echo "❌ Frontend Stylelint errors"; exit 1; }
+  (cd frontend && npm run build) || { echo "❌ Frontend build failed"; exit 1; }
+  echo "✅ Frontend checks passed"
 fi
