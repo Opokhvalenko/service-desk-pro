@@ -1,0 +1,20 @@
+import type { UserRole } from '@prisma/client';
+
+export interface JwtPayload {
+  sub: string;
+  email: string;
+  role: UserRole;
+}
+
+export interface AuthenticatedUser {
+  id: string;
+  email: string;
+  role: UserRole;
+  fullName: string;
+}
+
+export interface TokenPair {
+  accessToken: string;
+  refreshToken: string;
+  refreshTokenExpiresAt: Date;
+}

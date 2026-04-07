@@ -8,6 +8,7 @@ import { LoggerModule } from 'nestjs-pino';
 import { validateEnv } from './config/env.validation';
 import { PrismaModule } from './infrastructure/prisma/prisma.module';
 import { RedisModule } from './infrastructure/redis/redis.module';
+import { AuthModule } from './modules/auth/auth.module';
 import { HealthModule } from './modules/health/health.module';
 
 @Module({
@@ -37,6 +38,7 @@ import { HealthModule } from './modules/health/health.module';
     CqrsModule.forRoot(),
     PrismaModule,
     RedisModule,
+    AuthModule,
     HealthModule,
   ],
 })

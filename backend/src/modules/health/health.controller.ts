@@ -2,15 +2,17 @@ import { Controller, Get, Inject } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import {
   HealthCheck,
-  type HealthCheckService,
+  HealthCheckService,
   type HealthIndicatorResult,
-  type PrismaHealthIndicator,
+  PrismaHealthIndicator,
 } from '@nestjs/terminus';
 import type Redis from 'ioredis';
-import type { PrismaService } from '../../infrastructure/prisma/prisma.service';
+import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { REDIS_CLIENT } from '../../infrastructure/redis/redis.module';
+import { Public } from '../auth/decorators';
 
 @ApiTags('health')
+@Public()
 @Controller('health')
 export class HealthController {
   constructor(

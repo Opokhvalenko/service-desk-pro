@@ -32,7 +32,7 @@
       "recommended": true,
       "style": {
         "noNonNullAssertion": "warn",
-        "useImportType": "error",
+        "useImportType": "off",
         "useNodejsImportProtocol": "error"
       },
       "suspicious": {
