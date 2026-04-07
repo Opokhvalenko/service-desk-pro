@@ -1,13 +1,13 @@
 // IMPORTANT: instrument.ts must be imported first (Sentry init).
 import './instrument';
 
-import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
+import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { Logger } from 'nestjs-pino';
-import helmet from 'helmet';
-import cookieParser from 'cookie-parser';
 import compression from 'compression';
+import cookieParser from 'cookie-parser';
+import helmet from 'helmet';
+import { Logger } from 'nestjs-pino';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { startOtel } from './observability/otel';
@@ -57,10 +57,9 @@ async function bootstrap(): Promise<void> {
   const port = Number(process.env.PORT ?? 3000);
   await app.listen(port);
 
-  // eslint-disable-next-line no-console
-  console.log(`🚀 Backend running at http://localhost:${port}/${apiPrefix}`);
-  // eslint-disable-next-line no-console
-  console.log(`📚 Swagger docs at http://localhost:${port}/api/docs`);
+  const logger = app.get(Logger);
+  logger.log(`🚀 Backend running at http://localhost:${port}/${apiPrefix}`);
+  logger.log(`📚 Swagger docs at http://localhost:${port}/api/docs`);
 
   process.on('SIGTERM', async () => {
     await otel?.shutdown();
