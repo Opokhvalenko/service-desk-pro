@@ -5,11 +5,14 @@
   "description": "B2B Support Ticket Platform — monorepo (frontend + backend)",
   "scripts": {
     "prepare": "husky",
-    "lint:backend": "cd backend && npm run lint",
     "check:backend": "cd backend && npm run check:ci",
     "typecheck:backend": "cd backend && npm run typecheck",
     "test:backend": "cd backend && npm test -- --passWithNoTests",
-    "build:backend": "cd backend && npm run build"
+    "build:backend": "cd backend && npm run build",
+    "check:frontend": "cd frontend && npm run check:ci",
+    "stylelint:frontend": "cd frontend && npm run stylelint:ci",
+    "typecheck:frontend": "cd frontend && npm run typecheck",
+    "build:frontend": "cd frontend && npm run build"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.5.0",
@@ -20,6 +23,12 @@
   "lint-staged": {
     "backend/**/*.{ts,js,json}": [
       "bash -c 'cd backend && npx biome check --write --no-errors-on-unmatched --files-ignore-unknown=true'"
+    ],
+    "frontend/**/*.{ts,html,json}": [
+      "bash -c 'cd frontend && npx biome check --write --no-errors-on-unmatched --files-ignore-unknown=true'"
+    ],
+    "frontend/**/*.scss": [
+      "bash -c 'cd frontend && npx stylelint --fix'"
     ]
   }
 }

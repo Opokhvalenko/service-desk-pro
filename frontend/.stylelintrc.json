@@ -1,0 +1,37 @@
+{
+  "extends": ["stylelint-config-standard-scss"],
+  "rules": {
+    "selector-class-pattern": null,
+    "no-empty-source": null,
+    "font-family-name-quotes": null,
+    "scss/no-global-function-names": null,
+    "at-rule-no-unknown": null,
+    "scss/at-rule-no-unknown": [
+      true,
+      {
+        "ignoreAtRules": [
+          "tailwind",
+          "apply",
+          "variants",
+          "responsive",
+          "screen",
+          "layer",
+          "config",
+          "theme",
+          "use",
+          "include",
+          "mixin",
+          "if",
+          "else",
+          "for",
+          "function",
+          "return",
+          "import"
+        ]
+      }
+    ],
+    "no-descending-specificity": null,
+    "media-feature-range-notation": "prefix"
+  },
+  "ignoreFiles": ["dist/**/*", "node_modules/**/*", ".angular/**/*"]
+}
