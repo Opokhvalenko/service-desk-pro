@@ -20,6 +20,7 @@ import {
   type TicketStatus,
 } from '../../core/tickets/ticket.types';
 import { TicketsStore } from '../../core/tickets/tickets.store';
+import { NotificationsBellComponent } from '../../shared/notifications-bell/notifications-bell.component';
 import { CreateTicketDialog } from './create-ticket.dialog';
 
 @Component({
@@ -28,6 +29,7 @@ import { CreateTicketDialog } from './create-ticket.dialog';
   imports: [
     DatePipe,
     FormsModule,
+    NotificationsBellComponent,
     MatTableModule,
     MatButtonModule,
     MatIconModule,

@@ -2,6 +2,8 @@ import { effect, Injectable, inject } from '@angular/core';
 import { io, type Socket } from 'socket.io-client';
 import { environment } from '../../../environments/environment';
 import { AuthStore } from '../auth/auth.store';
+import type { AppNotification } from '../notifications/notification.types';
+import { NotificationsStore } from '../notifications/notifications.store';
 import { TicketsStore } from '../tickets/tickets.store';
 
 const TICKET_EVENTS = {
@@ -11,6 +13,8 @@ const TICKET_EVENTS = {
   SLA_BREACHED: 'ticket.sla_breached',
 } as const;
 
+const NOTIFICATION_EVENTS = { NEW: 'notification.new' } as const;
+
 interface TicketEventPayload {
   ticketId: string;
 }
@@ -19,6 +23,7 @@ interface TicketEventPayload {
 export class RealtimeService {
   private readonly auth = inject(AuthStore);
   private readonly tickets = inject(TicketsStore);
+  private readonly notifications = inject(NotificationsStore);
   private socket: Socket | null = null;
   private joinedTicketId: string | null = null;
 
@@ -56,6 +61,10 @@ export class RealtimeService {
     this.socket.on(TICKET_EVENTS.ASSIGNED, handler);
     this.socket.on(TICKET_EVENTS.COMMENT_ADDED, handler);
     this.socket.on(TICKET_EVENTS.SLA_BREACHED, handler);
+
+    this.socket.on(NOTIFICATION_EVENTS.NEW, (notif: AppNotification) => {
+      this.notifications.addRealtime({ ...notif, isRead: false });
+    });
   }
 
   private disconnect(): void {

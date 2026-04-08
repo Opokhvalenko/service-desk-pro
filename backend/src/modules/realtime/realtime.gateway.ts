@@ -11,6 +11,10 @@ import {
 } from '@nestjs/websockets';
 import type { Server, Socket } from 'socket.io';
 import {
+  type NewNotificationPayload,
+  NOTIFICATION_EVENTS,
+} from '../../common/events/notification.events';
+import {
   TICKET_EVENTS,
   type TicketAssignedPayload,
   type TicketCommentAddedPayload,
@@ -99,5 +103,10 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
     // Notify leads + admins (role rooms)
     this.server.to('role:TEAM_LEAD').emit(TICKET_EVENTS.SLA_BREACHED, payload);
     this.server.to('role:ADMIN').emit(TICKET_EVENTS.SLA_BREACHED, payload);
+  }
+
+  @OnEvent(NOTIFICATION_EVENTS.NEW)
+  emitNotification(payload: NewNotificationPayload): void {
+    this.server.to(`user:${payload.userId}`).emit(NOTIFICATION_EVENTS.NEW, payload);
   }
 }
