@@ -15,6 +15,19 @@
               @if (ticket()!.breachedAt) {
                 <span class="sla-breach">SLA BREACHED</span>
               }
+              <span class="head-spacer"></span>
+              @if (canEdit()) {
+                <button
+                  mat-stroked-button
+                  type="button"
+                  (click)="openEdit()"
+                  class="edit-btn"
+                  aria-label="Edit ticket"
+                >
+                  <mat-icon>edit</mat-icon>
+                  Edit
+                </button>
+              }
             </div>
             <h1 class="title">{{ ticket()!.title }}</h1>
             <div class="meta-row">
