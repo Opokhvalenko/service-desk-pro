@@ -25,6 +25,26 @@
   justify-content: center;
 }
 
+.head-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.head-spacer {
+  flex: 1;
+}
+
+.edit-btn {
+  border-radius: 0.625rem !important;
+  font-weight: 600 !important;
+
+  mat-icon {
+    margin-right: 0.3rem;
+  }
+}
+
 .quick-actions {
   display: flex;
   flex-direction: column;

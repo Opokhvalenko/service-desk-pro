@@ -14,6 +14,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -26,6 +27,7 @@ import { TICKET_TRANSITIONS, type TicketStatus } from '../../core/tickets/ticket
 import { TicketsService } from '../../core/tickets/tickets.service';
 import { TicketsStore } from '../../core/tickets/tickets.store';
 import { AppToolbarComponent } from '../../shared/app-toolbar/app-toolbar.component';
+import { EditTicketDialog } from './edit-ticket.dialog';
 
 interface QuickAction {
   label: string;
@@ -45,6 +47,7 @@ interface QuickAction {
     MatButtonModule,
     MatIconModule,
     MatChipsModule,
+    MatDialogModule,
     MatDividerModule,
     MatFormFieldModule,
     MatInputModule,
@@ -63,6 +66,7 @@ export class TicketDetailPage implements OnInit, OnDestroy {
   protected readonly auth = inject(AuthStore);
   private readonly realtime = inject(RealtimeService);
   private readonly api = inject(TicketsService);
+  private readonly dialog = inject(MatDialog);
 
   protected readonly newComment = signal('');
   protected readonly internalNote = signal(false);
@@ -209,6 +213,21 @@ export class TicketDetailPage implements OnInit, OnDestroy {
     const role = this.auth.role();
     return role === 'AGENT' || role === 'TEAM_LEAD' || role === 'ADMIN';
   });
+
+  /** Edit allowed for staff on tickets that are not finalized. */
+  protected readonly canEdit = computed(() => {
+    const role = this.auth.role();
+    const t = this.ticket();
+    if (!t || !role) return false;
+    if (role === 'REQUESTER') return false;
+    return t.status !== 'CLOSED' && t.status !== 'RESOLVED';
+  });
+
+  protected openEdit(): void {
+    const t = this.ticket();
+    if (!t) return;
+    this.dialog.open(EditTicketDialog, { width: '34rem', data: t });
+  }
 
   ngOnInit(): void {
     void this.store.loadOne(this.id());

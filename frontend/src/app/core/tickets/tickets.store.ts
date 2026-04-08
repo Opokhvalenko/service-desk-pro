@@ -1,6 +1,12 @@
 import { inject } from '@angular/core';
 import { patchState, signalStore, withMethods, withState } from '@ngrx/signals';
-import type { CreateTicketDto, ListTicketsQuery, Ticket, TicketStatus } from './ticket.types';
+import type {
+  CreateTicketDto,
+  ListTicketsQuery,
+  Ticket,
+  TicketStatus,
+  UpdateTicketDto,
+} from './ticket.types';
 import { TicketsService } from './tickets.service';
 
 interface TicketsState {
@@ -77,6 +83,21 @@ export const TicketsStore = signalStore(
       } catch (err) {
         patchState(store, { error: errorMessage(err) });
         return null;
+      }
+    },
+
+    async update(id: string, dto: UpdateTicketDto): Promise<boolean> {
+      try {
+        const updated = await api.update(id, dto);
+        patchState(store, {
+          items: store.items().map((t) => (t.id === id ? { ...t, ...updated } : t)),
+          current:
+            store.current()?.id === id ? { ...store.current(), ...updated } : store.current(),
+        });
+        return true;
+      } catch (err) {
+        patchState(store, { error: errorMessage(err) });
+        return false;
       }
     },
 
