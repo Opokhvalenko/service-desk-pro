@@ -130,7 +130,7 @@ export class TicketsListPage implements OnInit {
   }
 
   protected statusClass(status: TicketStatus): string {
-    return `status-chip status-${status.toLowerCase().replace('_', '-')}`;
+    return `status-chip status-${status.toLowerCase().replace(/_/g, '-')}`;
   }
 
   protected priorityClass(priority: TicketPriority): string {
