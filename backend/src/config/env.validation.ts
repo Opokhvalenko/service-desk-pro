@@ -100,6 +100,9 @@ export class EnvironmentVariables {
 
   @IsString()
   LOG_LEVEL = 'info';
+
+  @IsString()
+  ALLOW_REGISTRATION = 'true';
 }
 
 export function validateEnv(config: Record<string, unknown>) {

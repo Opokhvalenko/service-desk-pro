@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  ForbiddenException,
   HttpCode,
   HttpStatus,
   Post,
@@ -37,6 +38,9 @@ export class AuthController {
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
+    if (this.config.get<string>('ALLOW_REGISTRATION') !== 'true') {
+      throw new ForbiddenException('Public registration is disabled');
+    }
     const result = await this.auth.register(dto, this.meta(req));
     this.setRefreshCookie(res, result.tokens);
     return { user: result.user, accessToken: result.tokens.accessToken };
