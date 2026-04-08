@@ -6,6 +6,47 @@
   } @else if (error()) {
     <div class="error-banner" role="alert">{{ error() }}</div>
   } @else if (stats(); as s) {
+    @if (auth.role() === 'REQUESTER') {
+      <section class="requester-hero">
+        <div class="hero-text">
+          <h1 class="hero-title">Welcome back, {{ auth.user()?.fullName }}</h1>
+          <p class="hero-sub">
+            You have <strong>{{ s.totals.open }}</strong> open
+            {{ s.totals.open === 1 ? 'ticket' : 'tickets' }}
+            and <strong>{{ s.totals.resolved }}</strong> resolved.
+          </p>
+        </div>
+        <button mat-flat-button color="primary" type="button" (click)="goToTickets()">
+          <mat-icon>list_alt</mat-icon>
+          View my tickets
+        </button>
+      </section>
+
+      <section class="requester-cards">
+        <mat-card appearance="outlined" class="kpi kpi-open" (click)="goToTickets()">
+          <mat-card-content>
+            <div class="kpi-label">My open tickets</div>
+            <div class="kpi-value">{{ s.totals.open }}</div>
+          </mat-card-content>
+        </mat-card>
+        <mat-card
+          appearance="outlined"
+          class="kpi kpi-resolved"
+          (click)="goToTickets({ status: 'RESOLVED' })"
+        >
+          <mat-card-content>
+            <div class="kpi-label">Resolved</div>
+            <div class="kpi-value">{{ s.totals.resolved }}</div>
+          </mat-card-content>
+        </mat-card>
+        <mat-card appearance="outlined" class="kpi kpi-total" (click)="goToTickets()">
+          <mat-card-content>
+            <div class="kpi-label">Total submitted</div>
+            <div class="kpi-value">{{ s.totals.total }}</div>
+          </mat-card-content>
+        </mat-card>
+      </section>
+    } @else {
     <section class="kpis">
       <mat-card appearance="outlined" class="kpi kpi-total" (click)="goToTickets()">
         <mat-card-content>
@@ -103,5 +144,6 @@
         </mat-card-content>
       </mat-card>
     </section>
+    }
   }
 </main>

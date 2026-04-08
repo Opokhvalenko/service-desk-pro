@@ -31,5 +31,5 @@ export function assertTransition(from: TicketStatus, to: TicketStatus): void {
 }
 
 export function formatTicketNumber(num: number): string {
-  return `TKT-${num.toString().padStart(6, '0')}`;
+  return `TKT-${num}`;
 }

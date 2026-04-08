@@ -37,9 +37,9 @@ describe('Ticket state machine', () => {
   });
 
   describe('formatTicketNumber', () => {
-    it('pads to 6 digits', () => {
-      expect(formatTicketNumber(1)).toBe('TKT-000001');
-      expect(formatTicketNumber(42)).toBe('TKT-000042');
+    it('returns TKT-<n> without zero padding', () => {
+      expect(formatTicketNumber(1)).toBe('TKT-1');
+      expect(formatTicketNumber(42)).toBe('TKT-42');
       expect(formatTicketNumber(123456)).toBe('TKT-123456');
     });
   });

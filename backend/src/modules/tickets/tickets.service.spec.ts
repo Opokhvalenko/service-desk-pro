@@ -70,7 +70,7 @@ describe('TicketsService', () => {
         'ticket.created',
         expect.objectContaining({ ticketId: 't1' }),
       );
-      expect(result.code).toBe('TKT-000001');
+      expect(result.code).toBe('TKT-1');
     });
   });
 

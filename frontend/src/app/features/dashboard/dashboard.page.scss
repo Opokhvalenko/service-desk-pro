@@ -38,6 +38,51 @@
   gap: 1rem;
 }
 
+.requester-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  padding: 1.5rem 1.75rem;
+  border-radius: 1rem;
+  background: linear-gradient(135deg, #4f46e5 0%, #4338ca 50%, #0891b2 100%);
+  color: #fff;
+  box-shadow: 0 12px 30px -15px rgb(15 23 42 / 35%);
+
+  .hero-title {
+    margin: 0 0 0.35rem;
+    font-size: 1.3rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+
+  .hero-sub {
+    margin: 0;
+    font-size: 0.9rem;
+    color: rgb(255 255 255 / 88%);
+
+    strong {
+      color: #fff;
+    }
+  }
+
+  button {
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 640px) {
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+  }
+}
+
+.requester-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: 1rem;
+}
+
 .kpi {
   cursor: pointer;
   position: relative;

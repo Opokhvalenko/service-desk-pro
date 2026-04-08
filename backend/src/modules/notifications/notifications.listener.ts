@@ -9,6 +9,7 @@ import {
 } from '../../common/events/ticket.events';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
+import { formatTicketNumber } from '../tickets/state-machine';
 import { NotificationsService } from './notifications.service';
 
 @Injectable()
@@ -36,7 +37,7 @@ export class NotificationsListener {
     ]);
     if (!ticket || !assignee) return;
 
-    const code = `TKT-${ticket.number.toString().padStart(6, '0')}`;
+    const code = formatTicketNumber(ticket.number);
     const message = `You were assigned ${code}: ${ticket.title}`;
 
     await this.notifications.create({
@@ -60,7 +61,7 @@ export class NotificationsListener {
     });
     if (!ticket) return;
 
-    const code = `TKT-${ticket.number.toString().padStart(6, '0')}`;
+    const code = formatTicketNumber(ticket.number);
     const message = `${code} status: ${payload.from} → ${payload.to}`;
 
     const recipients = new Set<string>();
@@ -89,7 +90,7 @@ export class NotificationsListener {
     });
     if (!ticket) return;
 
-    const code = `TKT-${ticket.number.toString().padStart(6, '0')}`;
+    const code = formatTicketNumber(ticket.number);
     const message = `New comment on ${code}: ${ticket.title}`;
 
     const recipients = new Set<string>();
@@ -122,7 +123,7 @@ export class NotificationsListener {
     });
     if (!ticket) return;
 
-    const code = `TKT-${payload.number.toString().padStart(6, '0')}`;
+    const code = formatTicketNumber(payload.number);
     const message = `SLA breached on ${code} (${payload.breachType}): ${ticket.title}`;
 
     // Notify assignee + all leads/admins

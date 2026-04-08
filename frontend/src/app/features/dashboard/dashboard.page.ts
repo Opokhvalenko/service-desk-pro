@@ -1,5 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, type OnInit, signal } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Router } from '@angular/router';
 import type { ChartConfiguration, ChartData } from 'chart.js';
@@ -30,7 +32,14 @@ const PRIORITY_COLORS: Record<string, string> = {
 @Component({
   selector: 'app-dashboard',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [MatCardModule, MatProgressSpinnerModule, BaseChartDirective, AppToolbarComponent],
+  imports: [
+    MatCardModule,
+    MatButtonModule,
+    MatIconModule,
+    MatProgressSpinnerModule,
+    BaseChartDirective,
+    AppToolbarComponent,
+  ],
   templateUrl: './dashboard.page.html',
   styleUrl: './dashboard.page.scss',
 })
