@@ -174,6 +174,10 @@ import { UserFormDialog, type UserFormResult } from './user-form.dialog';
       .email {
         font-size: 0.78rem;
         color: #64748b;
+        word-break: break-all;
+      }
+      .users-table .mat-column-name {
+        min-width: 16rem;
       }
       .role-chip {
         padding: 0.2rem 0.6rem;
@@ -244,7 +248,7 @@ export class AdminUsersPage implements OnInit {
       data: { user: null },
     });
     ref.afterClosed().subscribe(async (result: UserFormResult | undefined) => {
-      if (!result || !result.email || !result.password) return;
+      if (!result?.email || !result.password) return;
       try {
         await this.api.create({
           email: result.email,
