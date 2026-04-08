@@ -80,6 +80,25 @@ export class TicketDetailPage implements OnInit, OnDestroy {
     return role !== null && role !== 'REQUESTER';
   });
 
+  protected readonly canReopen = computed(() => {
+    const t = this.ticket();
+    const me = this.auth.user();
+    if (!t || !me) return false;
+    if (this.auth.role() !== 'REQUESTER') return false;
+    if (t.createdBy.id !== me.id) return false;
+    return t.status === 'RESOLVED' || t.status === 'CLOSED';
+  });
+
+  protected readonly isReadOnlyForRequester = computed(() => {
+    if (this.auth.role() !== 'REQUESTER') return false;
+    const t = this.ticket();
+    return !!t && (t.status === 'RESOLVED' || t.status === 'CLOSED');
+  });
+
+  protected async reopen(): Promise<void> {
+    await this.store.changeStatus(this.id(), 'REOPENED');
+  }
+
   protected readonly canAssign = computed(() => {
     const role = this.auth.role();
     return role === 'AGENT' || role === 'TEAM_LEAD' || role === 'ADMIN';

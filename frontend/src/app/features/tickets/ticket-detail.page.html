@@ -44,14 +44,18 @@
           <header class="comments-head">
             <h2 class="section-label">
               <mat-icon>forum</mat-icon>
-              Comments
+              {{ auth.role() === 'REQUESTER' ? 'Conversation' : 'Comments' }}
               <span class="count">{{ (ticket()!.comments ?? []).length }}</span>
             </h2>
           </header>
 
           <div class="comments-list">
             @if ((ticket()!.comments ?? []).length === 0) {
-              <p class="empty-comments">No comments yet — be the first to write one.</p>
+              @if (auth.role() === 'REQUESTER') {
+                <p class="empty-comments">No messages yet from the support team.</p>
+              } @else {
+                <p class="empty-comments">No comments yet — be the first to write one.</p>
+              }
             }
             @for (c of ticket()!.comments ?? []; track c.id) {
               <article class="comment" [class.internal]="c.isInternal">
@@ -73,6 +77,21 @@
             }
           </div>
 
+          @if (canReopen()) {
+            <div class="reopen-banner">
+              <mat-icon>info</mat-icon>
+              <div class="reopen-text">
+                <strong>This ticket is {{ ticket()!.status.toLowerCase() }}.</strong>
+                If your issue is not actually fixed, you can reopen it.
+              </div>
+              <button mat-flat-button color="primary" type="button" (click)="reopen()">
+                <mat-icon>refresh</mat-icon>
+                Reopen ticket
+              </button>
+            </div>
+          }
+
+          @if (!isReadOnlyForRequester()) {
           <form (submit)="$event.preventDefault(); submitComment()" class="comment-form">
             <mat-form-field appearance="outline" class="full">
               <mat-label>Add a comment</mat-label>
@@ -106,6 +125,7 @@
               </button>
             </div>
           </form>
+          }
         </mat-card>
       </div>
 
