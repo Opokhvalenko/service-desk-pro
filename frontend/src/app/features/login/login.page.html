@@ -58,17 +58,25 @@
       </form>
 
       <div class="demo-banner" role="note">
-        🎭 <strong>Demo environment</strong> — data resets daily at 03:00 UTC
+        <mat-icon class="demo-icon" aria-hidden="true">science</mat-icon>
+        <span><strong>Demo environment</strong> — data resets daily at 03:00 UTC</span>
       </div>
 
       <div class="demo-creds">
-        <p><strong>Demo accounts</strong> (password: <code>password123</code>)</p>
-        <ul>
-          <li>admin&#64;servicedesk.com — Admin</li>
-          <li>lead&#64;servicedesk.com — Team Lead</li>
-          <li>agent&#64;servicedesk.com — Agent</li>
-          <li>user&#64;servicedesk.com — Requester</li>
-        </ul>
+        <p><strong>Demo accounts</strong> (click to autofill)</p>
+        <div class="demo-grid">
+          @for (a of demoAccounts; track a.email) {
+            <button
+              type="button"
+              class="demo-pill"
+              (click)="fillDemo(a.email)"
+              [attr.aria-label]="'Login as ' + a.label"
+            >
+              <span class="pill-role">{{ a.label }}</span>
+              <span class="pill-email">{{ a.email }}</span>
+            </button>
+          }
+        </div>
       </div>
     </mat-card-content>
   </mat-card>

@@ -25,17 +25,41 @@ import { TicketsStore } from '../../core/tickets/tickets.store';
       <mat-dialog-content class="dialog-content">
         <mat-form-field appearance="outline">
           <mat-label>Title</mat-label>
-          <input matInput formControlName="title" maxlength="200" />
+          <input matInput formControlName="title" maxlength="200" required />
+          <mat-hint align="end">{{ form.controls.title.value.length }}/200</mat-hint>
+          @if (form.controls.title.touched && form.controls.title.errors; as e) {
+            @if (e['required']) {
+              <mat-error>Title is required</mat-error>
+            } @else if (e['minlength']) {
+              <mat-error>Minimum 3 characters</mat-error>
+            } @else if (e['maxlength']) {
+              <mat-error>Maximum 200 characters</mat-error>
+            }
+          }
         </mat-form-field>
 
         <mat-form-field appearance="outline">
           <mat-label>Description</mat-label>
-          <textarea matInput formControlName="description" rows="5"></textarea>
+          <textarea
+            matInput
+            formControlName="description"
+            rows="5"
+            maxlength="10000"
+            required
+          ></textarea>
+          <mat-hint align="end">{{ form.controls.description.value.length }}/10000</mat-hint>
+          @if (form.controls.description.touched && form.controls.description.errors; as e) {
+            @if (e['required']) {
+              <mat-error>Description is required</mat-error>
+            } @else if (e['minlength']) {
+              <mat-error>Minimum 10 characters</mat-error>
+            }
+          }
         </mat-form-field>
 
         <mat-form-field appearance="outline">
           <mat-label>Priority</mat-label>
-          <mat-select formControlName="priority">
+          <mat-select formControlName="priority" required>
             @for (p of priorities; track p) {
               <mat-option [value]="p">{{ p }}</mat-option>
             }
@@ -45,7 +69,7 @@ import { TicketsStore } from '../../core/tickets/tickets.store';
 
       <mat-dialog-actions align="end">
         <button mat-button type="button" (click)="dialogRef.close()">Cancel</button>
-        <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid || submitting()">
+        <button mat-flat-button color="primary" type="submit" [disabled]="submitting()">
           Create
         </button>
       </mat-dialog-actions>
@@ -79,7 +103,10 @@ export class CreateTicketDialog {
   });
 
   protected async submit(): Promise<void> {
-    if (this.form.invalid) return;
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
     const created = await this.store.create(this.form.getRawValue());
     if (created) this.dialogRef.close(created);
   }

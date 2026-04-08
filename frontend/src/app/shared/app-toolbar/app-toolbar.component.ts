@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatMenuModule } from '@angular/material/menu';
 import { Router } from '@angular/router';
 import { AuthStore } from '../../core/auth/auth.store';
 import { NotificationsBellComponent } from '../notifications-bell/notifications-bell.component';
@@ -10,7 +11,7 @@ export type ToolbarSection = 'dashboard' | 'tickets' | 'detail';
 @Component({
   selector: 'app-toolbar',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [MatButtonModule, MatIconModule, NotificationsBellComponent],
+  imports: [MatButtonModule, MatIconModule, MatMenuModule, NotificationsBellComponent],
   template: `
     <header class="toolbar">
       @if (active() === 'detail') {
@@ -44,9 +45,40 @@ export type ToolbarSection = 'dashboard' | 'tickets' | 'detail';
       <span class="spacer"></span>
       <span class="user-meta">{{ auth.user()?.fullName }} · {{ auth.role() }}</span>
       <app-notifications-bell />
-      <button mat-icon-button type="button" (click)="logout()" aria-label="Sign out">
+      <button
+        mat-icon-button
+        type="button"
+        (click)="logout()"
+        aria-label="Sign out"
+        class="desktop-only-logout"
+      >
         <mat-icon>logout</mat-icon>
       </button>
+
+      <button
+        mat-icon-button
+        type="button"
+        class="menu-toggle"
+        [matMenuTriggerFor]="mobileMenu"
+        aria-label="Open menu"
+      >
+        <mat-icon>menu</mat-icon>
+      </button>
+      <mat-menu #mobileMenu="matMenu" class="mobile-menu">
+        <div class="menu-user">{{ auth.user()?.fullName }} · {{ auth.role() }}</div>
+        <button mat-menu-item type="button" (click)="go('/dashboard')">
+          <mat-icon>dashboard</mat-icon>
+          <span>Dashboard</span>
+        </button>
+        <button mat-menu-item type="button" (click)="go('/tickets')">
+          <mat-icon>confirmation_number</mat-icon>
+          <span>Tickets</span>
+        </button>
+        <button mat-menu-item type="button" (click)="logout()">
+          <mat-icon>logout</mat-icon>
+          <span>Sign out</span>
+        </button>
+      </mat-menu>
     </header>
   `,
   styleUrl: './app-toolbar.component.scss',

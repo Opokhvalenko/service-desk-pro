@@ -56,7 +56,16 @@ export class DashboardPage implements OnInit {
   protected readonly chartOptions: ChartConfiguration['options'] = {
     responsive: true,
     maintainAspectRatio: false,
+    locale: 'en-US',
     plugins: { legend: { position: 'bottom' } },
+    scales: {
+      y: {
+        ticks: {
+          precision: 0,
+          callback: (value) => Number(value).toLocaleString('en-US'),
+        },
+      },
+    },
   };
 
   async ngOnInit(): Promise<void> {
