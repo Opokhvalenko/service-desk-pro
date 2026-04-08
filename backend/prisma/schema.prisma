@@ -69,6 +69,15 @@ model Ticket {
   assigneeId   String?
   resolvedAt   DateTime?
   closedAt     DateTime?
+
+  // SLA tracking
+  firstResponseDueAt DateTime?
+  resolveDueAt       DateTime?
+  firstResponseAt    DateTime?
+  breachedAt         DateTime?
+  pausedAt           DateTime?
+  pausedTotalMs      Int       @default(0)
+
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
 
@@ -81,7 +90,20 @@ model Ticket {
   @@index([assigneeId])
   @@index([createdById])
   @@index([createdAt])
+  @@index([resolveDueAt])
+  @@index([breachedAt])
   @@map("tickets")
+}
+
+model SlaPolicy {
+  id                  String         @id @default(cuid())
+  priority            TicketPriority @unique
+  firstResponseHours  Int
+  resolveHours        Int
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+
+  @@map("sla_policies")
 }
 
 model TicketComment {

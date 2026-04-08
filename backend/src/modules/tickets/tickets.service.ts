@@ -4,9 +4,18 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { type Prisma, TicketStatus, UserRole } from '@prisma/client';
+import {
+  TICKET_EVENTS,
+  type TicketAssignedPayload,
+  type TicketCommentAddedPayload,
+  type TicketCreatedPayload,
+  type TicketStatusChangedPayload,
+} from '../../common/events/ticket.events';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import type { AuthenticatedUser } from '../auth';
+import { SlaService } from '../sla/sla.service';
 import type {
   AssignTicketDto,
   ChangeStatusDto,
@@ -24,7 +33,11 @@ const TICKET_INCLUDE = {
 
 @Injectable()
 export class TicketsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly events: EventEmitter2,
+    private readonly sla: SlaService,
+  ) {}
 
   async create(dto: CreateTicketDto, user: AuthenticatedUser) {
     const ticket = await this.prisma.ticket.create({
@@ -37,8 +50,20 @@ export class TicketsService {
       include: TICKET_INCLUDE,
     });
 
+    await this.sla.initializeForTicket(ticket.id);
     await this.audit(user.id, 'Ticket', ticket.id, 'created', { title: ticket.title });
-    return this.serialize(ticket);
+    const created: TicketCreatedPayload = {
+      ticketId: ticket.id,
+      number: ticket.number,
+      createdById: user.id,
+    };
+    this.events.emit(TICKET_EVENTS.CREATED, created);
+
+    const fresh = await this.prisma.ticket.findUniqueOrThrow({
+      where: { id: ticket.id },
+      include: TICKET_INCLUDE,
+    });
+    return this.serialize(fresh);
   }
 
   async list(query: ListTicketsQueryDto, user: AuthenticatedUser) {
@@ -139,10 +164,18 @@ export class TicketsService {
       include: TICKET_INCLUDE,
     });
 
+    await this.sla.onStatusChange(id, existing.status, dto.status);
     await this.audit(user.id, 'Ticket', id, 'status_changed', {
       from: existing.status,
       to: dto.status,
     });
+    const payload: TicketStatusChangedPayload = {
+      ticketId: id,
+      from: existing.status,
+      to: dto.status,
+      actorId: user.id,
+    };
+    this.events.emit(TICKET_EVENTS.STATUS_CHANGED, payload);
     return this.serialize(ticket);
   }
 
@@ -175,6 +208,12 @@ export class TicketsService {
       from: existing.assigneeId,
       to: dto.assigneeId ?? null,
     });
+    const payload: TicketAssignedPayload = {
+      ticketId: id,
+      assigneeId: dto.assigneeId ?? null,
+      actorId: user.id,
+    };
+    this.events.emit(TICKET_EVENTS.ASSIGNED, payload);
     return this.serialize(ticket);
   }
 
@@ -198,6 +237,13 @@ export class TicketsService {
     });
 
     await this.audit(user.id, 'TicketComment', comment.id, 'created', { ticketId: id });
+    const payload: TicketCommentAddedPayload = {
+      ticketId: id,
+      commentId: comment.id,
+      authorId: user.id,
+      isInternal,
+    };
+    this.events.emit(TICKET_EVENTS.COMMENT_ADDED, payload);
     return comment;
   }
 
