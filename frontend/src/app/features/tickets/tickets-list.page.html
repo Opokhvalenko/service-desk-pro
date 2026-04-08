@@ -12,6 +12,7 @@
   </nav>
   <span class="spacer"></span>
   <span class="user-meta">{{ auth.user()?.fullName }} · {{ auth.role() }}</span>
+  <app-notifications-bell />
   <button mat-icon-button type="button" (click)="logout()" aria-label="Sign out">
     <mat-icon>logout</mat-icon>
   </button>
