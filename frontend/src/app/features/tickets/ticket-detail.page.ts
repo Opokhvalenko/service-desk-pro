@@ -27,6 +27,7 @@ import { TICKET_TRANSITIONS, type TicketStatus } from '../../core/tickets/ticket
 import { TicketsService } from '../../core/tickets/tickets.service';
 import { TicketsStore } from '../../core/tickets/tickets.store';
 import { AppToolbarComponent } from '../../shared/app-toolbar/app-toolbar.component';
+import { AttachmentsPanelComponent } from './attachments-panel.component';
 import { EditTicketDialog } from './edit-ticket.dialog';
 
 interface QuickAction {
@@ -43,6 +44,7 @@ interface QuickAction {
     DatePipe,
     FormsModule,
     AppToolbarComponent,
+    AttachmentsPanelComponent,
     MatCardModule,
     MatButtonModule,
     MatIconModule,

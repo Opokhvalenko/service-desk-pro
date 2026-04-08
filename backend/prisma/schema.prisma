@@ -54,6 +54,7 @@ model User {
   comments          TicketComment[]
   auditLogs         AuditLog[]
   notifications     Notification[]
+  attachments       Attachment[]
 
   @@index([role])
   @@map("users")
@@ -82,9 +83,10 @@ model Ticket {
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
 
-  createdBy User             @relation("TicketCreatedBy", fields: [createdById], references: [id])
-  assignee  User?            @relation("TicketAssignedTo", fields: [assigneeId], references: [id])
-  comments  TicketComment[]
+  createdBy   User            @relation("TicketCreatedBy", fields: [createdById], references: [id])
+  assignee    User?           @relation("TicketAssignedTo", fields: [assigneeId], references: [id])
+  comments    TicketComment[]
+  attachments Attachment[]
 
   @@index([status])
   @@index([priority])
@@ -94,6 +96,25 @@ model Ticket {
   @@index([resolveDueAt])
   @@index([breachedAt])
   @@map("tickets")
+}
+
+model Attachment {
+  id           String   @id @default(cuid())
+  ticketId     String
+  uploadedById String
+  fileName     String
+  mimeType     String
+  sizeBytes    Int
+  url          String
+  publicId     String
+  createdAt    DateTime @default(now())
+
+  ticket     Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  uploadedBy User   @relation(fields: [uploadedById], references: [id])
+
+  @@index([ticketId])
+  @@index([uploadedById])
+  @@map("attachments")
 }
 
 enum NotificationType {
