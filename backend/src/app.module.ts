@@ -12,6 +12,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { HealthModule } from './modules/health/health.module';
 import { RealtimeModule } from './modules/realtime/realtime.module';
 import { SlaModule } from './modules/sla/sla.module';
+import { StatsModule } from './modules/stats/stats.module';
 import { TicketsModule } from './modules/tickets/tickets.module';
 
 @Module({
@@ -44,6 +45,7 @@ import { TicketsModule } from './modules/tickets/tickets.module';
     AuthModule,
     SlaModule,
     TicketsModule,
+    StatsModule,
     RealtimeModule,
     HealthModule,
   ],

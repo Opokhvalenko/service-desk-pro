@@ -10,6 +10,20 @@
 .brand {
   font-weight: 600;
   font-size: 1.1rem;
+  margin-right: 1rem;
+}
+
+.nav {
+  display: flex;
+  gap: 0.25rem;
+
+  .nav-link {
+    color: var(--mat-sys-on-primary);
+
+    &.active {
+      background-color: rgb(255 255 255 / 18%);
+    }
+  }
 }
 
 .spacer {

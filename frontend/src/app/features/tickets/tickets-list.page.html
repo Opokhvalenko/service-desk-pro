@@ -1,5 +1,15 @@
 <header class="toolbar">
   <span class="brand">ServiceDesk Pro</span>
+  <nav class="nav">
+    <button mat-button type="button" class="nav-link" (click)="goToDashboard()">
+      <mat-icon>dashboard</mat-icon>
+      Dashboard
+    </button>
+    <button mat-button type="button" class="nav-link active">
+      <mat-icon>confirmation_number</mat-icon>
+      Tickets
+    </button>
+  </nav>
   <span class="spacer"></span>
   <span class="user-meta">{{ auth.user()?.fullName }} · {{ auth.role() }}</span>
   <button mat-icon-button type="button" (click)="logout()" aria-label="Sign out">

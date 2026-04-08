@@ -1,0 +1,106 @@
+<header class="toolbar">
+  <span class="brand">ServiceDesk Pro</span>
+  <nav class="nav">
+    <button mat-button type="button" class="nav-link active">
+      <mat-icon>dashboard</mat-icon>
+      Dashboard
+    </button>
+    <button mat-button type="button" class="nav-link" (click)="goToTickets()">
+      <mat-icon>confirmation_number</mat-icon>
+      Tickets
+    </button>
+  </nav>
+  <span class="spacer"></span>
+  <span class="user-meta">{{ auth.user()?.fullName }} · {{ auth.role() }}</span>
+  <button mat-icon-button type="button" (click)="logout()" aria-label="Sign out">
+    <mat-icon>logout</mat-icon>
+  </button>
+</header>
+
+<main class="page">
+  @if (loading()) {
+    <div class="loading"><mat-spinner diameter="40" /></div>
+  } @else if (error()) {
+    <div class="error-banner" role="alert">{{ error() }}</div>
+  } @else if (stats(); as s) {
+    <section class="kpis">
+      <mat-card appearance="outlined" class="kpi kpi-total">
+        <mat-card-content>
+          <div class="kpi-label">Total tickets</div>
+          <div class="kpi-value">{{ s.totals.total }}</div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card appearance="outlined" class="kpi kpi-open">
+        <mat-card-content>
+          <div class="kpi-label">Open / active</div>
+          <div class="kpi-value">{{ s.totals.open }}</div>
+          <div class="kpi-sub">{{ s.totals.unassigned }} unassigned</div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card appearance="outlined" class="kpi kpi-progress">
+        <mat-card-content>
+          <div class="kpi-label">In progress</div>
+          <div class="kpi-value">{{ s.totals.inProgress }}</div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card appearance="outlined" class="kpi kpi-resolved">
+        <mat-card-content>
+          <div class="kpi-label">Resolved</div>
+          <div class="kpi-value">{{ s.totals.resolved }}</div>
+          @if (s.avgResolutionHours !== null) {
+            <div class="kpi-sub">avg {{ s.avgResolutionHours }}h</div>
+          }
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card appearance="outlined" class="kpi kpi-breached">
+        <mat-card-content>
+          <div class="kpi-label">SLA breached</div>
+          <div class="kpi-value">{{ s.totals.breached }}</div>
+        </mat-card-content>
+      </mat-card>
+
+      @if (s.myAssigned !== null) {
+        <mat-card appearance="outlined" class="kpi kpi-mine">
+          <mat-card-content>
+            <div class="kpi-label">Assigned to me</div>
+            <div class="kpi-value">{{ s.myAssigned }}</div>
+          </mat-card-content>
+        </mat-card>
+      }
+    </section>
+
+    <section class="charts">
+      <mat-card appearance="outlined" class="chart-card">
+        <mat-card-header>
+          <mat-card-title>Status distribution</mat-card-title>
+        </mat-card-header>
+        <mat-card-content class="chart-wrap">
+          <canvas
+            baseChart
+            [type]="statusChartType"
+            [data]="statusChartData()"
+            [options]="chartOptions"
+          ></canvas>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card appearance="outlined" class="chart-card">
+        <mat-card-header>
+          <mat-card-title>By priority</mat-card-title>
+        </mat-card-header>
+        <mat-card-content class="chart-wrap">
+          <canvas
+            baseChart
+            [type]="priorityChartType"
+            [data]="priorityChartData()"
+            [options]="chartOptions"
+          ></canvas>
+        </mat-card-content>
+      </mat-card>
+    </section>
+  }
+</main>
