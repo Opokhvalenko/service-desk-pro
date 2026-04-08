@@ -1,11 +1,4 @@
-<header class="toolbar">
-  <button mat-icon-button type="button" (click)="goBack()" aria-label="Back">
-    <mat-icon>arrow_back</mat-icon>
-  </button>
-  <span class="brand">ServiceDesk Pro</span>
-  <span class="spacer"></span>
-  <span class="user-meta">{{ auth.user()?.fullName }} · {{ auth.role() }}</span>
-</header>
+<app-toolbar active="detail" />
 
 <main class="page">
   @if (store.currentLoading()) {
@@ -13,113 +6,181 @@
   } @else if (!ticket()) {
     <div class="empty">Ticket not found.</div>
   } @else {
-    <mat-card appearance="outlined" class="ticket-card">
-      <mat-card-header>
-        <mat-card-title>
-          <span class="code">{{ ticket()!.code }}</span>
-          {{ ticket()!.title }}
-        </mat-card-title>
-        <mat-card-subtitle>
-          Created by {{ ticket()!.createdBy.fullName }} ·
-          {{ ticket()!.createdAt | date: 'medium' }}
-        </mat-card-subtitle>
-      </mat-card-header>
+    <section class="layout">
+      <div class="main-col">
+        <mat-card appearance="outlined" class="ticket-card">
+          <header class="ticket-head">
+            <div class="head-row">
+              <span class="code">{{ ticket()!.code }}</span>
+              @if (ticket()!.breachedAt) {
+                <span class="sla-breach">SLA BREACHED</span>
+              }
+            </div>
+            <h1 class="title">{{ ticket()!.title }}</h1>
+            <div class="meta-row">
+              <span class="status-chip" [attr.data-status]="ticket()!.status">
+                {{ ticket()!.status }}
+              </span>
+              <span class="priority-chip" [attr.data-priority]="ticket()!.priority">
+                {{ ticket()!.priority }}
+              </span>
+              <span class="meta-divider">·</span>
+              <span class="meta-text">
+                Created by <strong>{{ ticket()!.createdBy.fullName }}</strong>
+                {{ ticket()!.createdAt | date: 'medium' }}
+              </span>
+            </div>
+          </header>
 
-      <mat-card-content>
-        <div class="meta-row">
-          <span class="status-chip" [attr.data-status]="ticket()!.status">
-            {{ ticket()!.status }}
-          </span>
-          <span class="priority-chip" [attr.data-priority]="ticket()!.priority">
-            {{ ticket()!.priority }}
-          </span>
-          @if (ticket()!.breachedAt) {
-            <span class="sla-breach">SLA BREACHED</span>
+          <mat-divider />
+
+          <section class="description-section">
+            <h2 class="section-label">Description</h2>
+            <p class="description">{{ ticket()!.description }}</p>
+          </section>
+        </mat-card>
+
+        <mat-card appearance="outlined" class="comments-card">
+          <header class="comments-head">
+            <h2 class="section-label">
+              <mat-icon>forum</mat-icon>
+              Comments
+              <span class="count">{{ (ticket()!.comments ?? []).length }}</span>
+            </h2>
+          </header>
+
+          <div class="comments-list">
+            @if ((ticket()!.comments ?? []).length === 0) {
+              <p class="empty-comments">No comments yet — be the first to write one.</p>
+            }
+            @for (c of ticket()!.comments ?? []; track c.id) {
+              <article class="comment" [class.internal]="c.isInternal">
+                <div class="avatar">
+                  {{ c.author?.fullName?.charAt(0) ?? '?' }}
+                </div>
+                <div class="bubble">
+                  <header>
+                    <strong>{{ c.author?.fullName ?? 'Unknown' }}</strong>
+                    <span class="role">{{ c.author?.role }}</span>
+                    @if (c.isInternal) {
+                      <span class="internal-tag">internal</span>
+                    }
+                    <span class="date">{{ c.createdAt | date: 'short' }}</span>
+                  </header>
+                  <p>{{ c.body }}</p>
+                </div>
+              </article>
+            }
+          </div>
+
+          <form (submit)="$event.preventDefault(); submitComment()" class="comment-form">
+            <mat-form-field appearance="outline" class="full">
+              <mat-label>Add a comment</mat-label>
+              <textarea
+                matInput
+                rows="3"
+                [ngModel]="newComment()"
+                (ngModelChange)="newComment.set($event)"
+                name="comment"
+              ></textarea>
+            </mat-form-field>
+            <div class="comment-actions">
+              @if (canPostInternal()) {
+                <mat-checkbox
+                  [ngModel]="internalNote()"
+                  (ngModelChange)="internalNote.set($event)"
+                  name="internal"
+                >
+                  Internal note
+                </mat-checkbox>
+              }
+              <span class="spacer"></span>
+              <button
+                mat-flat-button
+                color="primary"
+                type="submit"
+                [disabled]="!newComment().trim()"
+              >
+                <mat-icon>send</mat-icon>
+                Post comment
+              </button>
+            </div>
+          </form>
+        </mat-card>
+      </div>
+
+      <aside class="side-col">
+        <mat-card appearance="outlined" class="side-card">
+          <h3 class="side-label">Assignee</h3>
+          @if (canAssign()) {
+            <mat-form-field appearance="outline" class="full">
+              <mat-label>Assigned to</mat-label>
+              <mat-select
+                [value]="ticket()!.assignee?.id ?? null"
+                (selectionChange)="onAssigneeChange($event.value)"
+              >
+                <mat-option [value]="null">— Unassigned —</mat-option>
+                @for (u of assignableUsers(); track u.id) {
+                  <mat-option [value]="u.id">{{ u.fullName }} ({{ u.role }})</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            @if (!ticket()!.assignee) {
+              <button mat-stroked-button type="button" (click)="claimSelf()" class="full-btn">
+                <mat-icon>pan_tool</mat-icon>
+                Claim this ticket
+              </button>
+            }
+          } @else {
+            <div class="assignee-display">
+              <mat-icon>person</mat-icon>
+              {{ ticket()!.assignee?.fullName ?? 'Unassigned' }}
+            </div>
           }
-          <span class="assignee">
-            <mat-icon>person</mat-icon>
-            {{ ticket()!.assignee?.fullName ?? 'Unassigned' }}
-          </span>
-        </div>
-
-        <p class="description">{{ ticket()!.description }}</p>
+        </mat-card>
 
         @if (canChangeStatus() && availableTransitions().length > 0) {
-          <mat-form-field appearance="outline" class="status-changer">
-            <mat-label>Change status</mat-label>
-            <mat-select
-              [value]="ticket()!.status"
-              (selectionChange)="onStatusChange($event.value)"
-            >
-              <mat-option [value]="ticket()!.status" disabled>
-                {{ ticket()!.status }} (current)
-              </mat-option>
-              @for (s of availableTransitions(); track s) {
-                <mat-option [value]="s">{{ s }}</mat-option>
-              }
-            </mat-select>
-          </mat-form-field>
-        }
-      </mat-card-content>
-    </mat-card>
-
-    <mat-card appearance="outlined" class="comments-card">
-      <mat-card-header>
-        <mat-card-title>Comments</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        @if ((ticket()!.comments ?? []).length === 0) {
-          <p class="empty-comments">No comments yet.</p>
-        }
-        @for (c of ticket()!.comments ?? []; track c.id) {
-          <article class="comment" [class.internal]="c.isInternal">
-            <header>
-              <strong>{{ c.author?.fullName ?? 'Unknown' }}</strong>
-              <span class="role">{{ c.author?.role }}</span>
-              @if (c.isInternal) {
-                <span class="internal-tag">internal</span>
-              }
-              <span class="date">{{ c.createdAt | date: 'short' }}</span>
-            </header>
-            <p>{{ c.body }}</p>
-          </article>
-        }
-
-        <mat-divider class="divider" />
-
-        <form (submit)="$event.preventDefault(); submitComment()" class="comment-form">
-          <mat-form-field appearance="outline" class="full">
-            <mat-label>Add a comment</mat-label>
-            <textarea
-              matInput
-              rows="3"
-              [ngModel]="newComment()"
-              (ngModelChange)="newComment.set($event)"
-              name="comment"
-            ></textarea>
-          </mat-form-field>
-          <div class="comment-actions">
-            @if (canPostInternal()) {
-              <mat-checkbox
-                [ngModel]="internalNote()"
-                (ngModelChange)="internalNote.set($event)"
-                name="internal"
+          <mat-card appearance="outlined" class="side-card">
+            <h3 class="side-label">Status</h3>
+            <mat-form-field appearance="outline" class="full">
+              <mat-label>Change status</mat-label>
+              <mat-select
+                [value]="ticket()!.status"
+                (selectionChange)="onStatusChange($event.value)"
               >
-                Internal note
-              </mat-checkbox>
+                <mat-option [value]="ticket()!.status" disabled>
+                  {{ ticket()!.status }} (current)
+                </mat-option>
+                @for (s of availableTransitions(); track s) {
+                  <mat-option [value]="s">{{ s }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          </mat-card>
+        }
+
+        <mat-card appearance="outlined" class="side-card">
+          <h3 class="side-label">Details</h3>
+          <dl class="meta-list">
+            <dt>Priority</dt>
+            <dd>
+              <span class="priority-chip" [attr.data-priority]="ticket()!.priority">
+                {{ ticket()!.priority }}
+              </span>
+            </dd>
+            <dt>Created</dt>
+            <dd>{{ ticket()!.createdAt | date: 'short' }}</dd>
+            @if (ticket()!.resolvedAt) {
+              <dt>Resolved</dt>
+              <dd>{{ ticket()!.resolvedAt | date: 'short' }}</dd>
             }
-            <span class="spacer"></span>
-            <button
-              mat-flat-button
-              color="primary"
-              type="submit"
-              [disabled]="!newComment().trim()"
-            >
-              Post comment
-            </button>
-          </div>
-        </form>
-      </mat-card-content>
-    </mat-card>
+            @if (ticket()!.breachedAt) {
+              <dt>SLA breach</dt>
+              <dd class="breach-text">{{ ticket()!.breachedAt | date: 'short' }}</dd>
+            }
+          </dl>
+        </mat-card>
+      </aside>
+    </section>
   }
 </main>

@@ -1,22 +1,4 @@
-<header class="toolbar">
-  <span class="brand">ServiceDesk Pro</span>
-  <nav class="nav">
-    <button mat-button type="button" class="nav-link active">
-      <mat-icon>dashboard</mat-icon>
-      Dashboard
-    </button>
-    <button mat-button type="button" class="nav-link" (click)="goToTickets()">
-      <mat-icon>confirmation_number</mat-icon>
-      Tickets
-    </button>
-  </nav>
-  <span class="spacer"></span>
-  <span class="user-meta">{{ auth.user()?.fullName }} · {{ auth.role() }}</span>
-  <app-notifications-bell />
-  <button mat-icon-button type="button" (click)="logout()" aria-label="Sign out">
-    <mat-icon>logout</mat-icon>
-  </button>
-</header>
+<app-toolbar active="dashboard" />
 
 <main class="page">
   @if (loading()) {
@@ -25,29 +7,43 @@
     <div class="error-banner" role="alert">{{ error() }}</div>
   } @else if (stats(); as s) {
     <section class="kpis">
-      <mat-card appearance="outlined" class="kpi kpi-total">
+      <mat-card appearance="outlined" class="kpi kpi-total" (click)="goToTickets()">
         <mat-card-content>
           <div class="kpi-label">Total tickets</div>
           <div class="kpi-value">{{ s.totals.total }}</div>
         </mat-card-content>
       </mat-card>
 
-      <mat-card appearance="outlined" class="kpi kpi-open">
+      <mat-card
+        appearance="outlined"
+        class="kpi kpi-open"
+        (click)="goToTickets({ statusIn: 'NEW,OPEN,IN_PROGRESS,WAITING_FOR_CUSTOMER,ESCALATED,REOPENED' })"
+      >
         <mat-card-content>
           <div class="kpi-label">Open / active</div>
           <div class="kpi-value">{{ s.totals.open }}</div>
-          <div class="kpi-sub">{{ s.totals.unassigned }} unassigned</div>
+          @if (auth.role() !== 'REQUESTER') {
+            <div class="kpi-sub">{{ s.totals.unassigned }} unassigned</div>
+          }
         </mat-card-content>
       </mat-card>
 
-      <mat-card appearance="outlined" class="kpi kpi-progress">
+      <mat-card
+        appearance="outlined"
+        class="kpi kpi-progress"
+        (click)="goToTickets({ status: 'IN_PROGRESS' })"
+      >
         <mat-card-content>
           <div class="kpi-label">In progress</div>
           <div class="kpi-value">{{ s.totals.inProgress }}</div>
         </mat-card-content>
       </mat-card>
 
-      <mat-card appearance="outlined" class="kpi kpi-resolved">
+      <mat-card
+        appearance="outlined"
+        class="kpi kpi-resolved"
+        (click)="goToTickets({ status: 'RESOLVED' })"
+      >
         <mat-card-content>
           <div class="kpi-label">Resolved</div>
           <div class="kpi-value">{{ s.totals.resolved }}</div>
@@ -57,7 +53,11 @@
         </mat-card-content>
       </mat-card>
 
-      <mat-card appearance="outlined" class="kpi kpi-breached">
+      <mat-card
+        appearance="outlined"
+        class="kpi kpi-breached"
+        (click)="goToTickets({ breached: true })"
+      >
         <mat-card-content>
           <div class="kpi-label">SLA breached</div>
           <div class="kpi-value">{{ s.totals.breached }}</div>

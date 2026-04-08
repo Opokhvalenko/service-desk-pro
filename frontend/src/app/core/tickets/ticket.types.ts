@@ -62,6 +62,8 @@ export interface TicketListResponse {
 
 export interface ListTicketsQuery {
   status?: TicketStatus;
+  statusIn?: string;
+  breached?: boolean;
   priority?: TicketPriority;
   assigneeId?: string;
   search?: string;

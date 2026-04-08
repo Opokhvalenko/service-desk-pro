@@ -69,7 +69,16 @@ export class TicketsService {
   async list(query: ListTicketsQueryDto, user: AuthenticatedUser) {
     const where: Prisma.TicketWhereInput = this.scopeForUser(user);
 
-    if (query.status) where.status = query.status;
+    if (query.status) {
+      where.status = query.status;
+    } else if (query.statusIn) {
+      const values = query.statusIn
+        .split(',')
+        .map((s) => s.trim())
+        .filter((s): s is TicketStatus => (Object.values(TicketStatus) as string[]).includes(s));
+      if (values.length > 0) where.status = { in: values };
+    }
+    if (query.breached) where.breachedAt = { not: null };
     if (query.priority) where.priority = query.priority;
     if (query.assigneeId) where.assigneeId = query.assigneeId;
     if (query.search) {
@@ -177,6 +186,17 @@ export class TicketsService {
     };
     this.events.emit(TICKET_EVENTS.STATUS_CHANGED, payload);
     return this.serialize(ticket);
+  }
+
+  async assignableUsers() {
+    return this.prisma.user.findMany({
+      where: {
+        isActive: true,
+        role: { in: [UserRole.AGENT, UserRole.TEAM_LEAD, UserRole.ADMIN] },
+      },
+      select: { id: true, fullName: true, email: true, role: true },
+      orderBy: { fullName: 'asc' },
+    });
   }
 
   async assign(id: string, dto: AssignTicketDto, user: AuthenticatedUser) {

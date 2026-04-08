@@ -25,6 +25,8 @@ services:
         value: api/v1
       - key: LOG_LEVEL
         value: info
+      - key: ALLOW_REGISTRATION
+        value: 'false'
       - key: COOKIE_SECURE
         value: 'true'
       - key: COOKIE_DOMAIN
