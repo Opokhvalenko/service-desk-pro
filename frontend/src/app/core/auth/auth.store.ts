@@ -25,55 +25,64 @@ export const AuthStore = signalStore(
     isAuthenticated: computed(() => state.user() !== null && state.accessToken() !== null),
     role: computed<UserRole | null>(() => state.user()?.role ?? null),
   })),
-  withMethods((store, auth = inject(AuthService), router = inject(Router)) => ({
-    async login(credentials: LoginCredentials): Promise<void> {
-      patchState(store, { loading: true, error: null });
-      try {
-        const response = await auth.login(credentials);
-        patchState(store, {
-          user: response.user,
-          accessToken: response.accessToken,
-          loading: false,
-        });
-        const role = response.user.role;
-        const landing = role === 'ADMIN' || role === 'TEAM_LEAD' ? '/dashboard' : '/tickets';
-        await router.navigate([landing]);
-      } catch (err) {
-        patchState(store, {
-          loading: false,
-          error: err instanceof Error ? err.message : 'Login failed',
-        });
-        throw err;
-      }
-    },
+  withMethods((store, auth = inject(AuthService), router = inject(Router)) => {
+    let refreshInFlight: Promise<boolean> | null = null;
+    return {
+      async login(credentials: LoginCredentials): Promise<void> {
+        patchState(store, { loading: true, error: null });
+        try {
+          const response = await auth.login(credentials);
+          patchState(store, {
+            user: response.user,
+            accessToken: response.accessToken,
+            loading: false,
+          });
+          const role = response.user.role;
+          const landing = role === 'ADMIN' || role === 'TEAM_LEAD' ? '/dashboard' : '/tickets';
+          await router.navigate([landing]);
+        } catch (err) {
+          patchState(store, {
+            loading: false,
+            error: err instanceof Error ? err.message : 'Login failed',
+          });
+          throw err;
+        }
+      },
 
-    async refresh(): Promise<boolean> {
-      try {
-        const response = await auth.refresh();
-        patchState(store, { user: response.user, accessToken: response.accessToken });
-        return true;
-      } catch {
-        patchState(store, { user: null, accessToken: null });
-        return false;
-      }
-    },
+      async refresh(): Promise<boolean> {
+        if (refreshInFlight) return refreshInFlight;
+        refreshInFlight = (async () => {
+          try {
+            const response = await auth.refresh();
+            patchState(store, { user: response.user, accessToken: response.accessToken });
+            return true;
+          } catch {
+            patchState(store, { user: null, accessToken: null });
+            return false;
+          } finally {
+            refreshInFlight = null;
+          }
+        })();
+        return refreshInFlight;
+      },
 
-    async logout(): Promise<void> {
-      try {
-        await auth.logout();
-      } catch {
-        // ignore — clear state regardless
-      }
-      patchState(store, { user: null, accessToken: null, error: null });
-      await router.navigate(['/login']);
-    },
+      async logout(): Promise<void> {
+        try {
+          await auth.logout();
+        } catch {
+          // ignore — clear state regardless
+        }
+        patchState(store, { user: null, accessToken: null, error: null });
+        await router.navigate(['/login']);
+      },
 
-    setSession(user: AuthUser, accessToken: string): void {
-      patchState(store, { user, accessToken, error: null });
-    },
+      setSession(user: AuthUser, accessToken: string): void {
+        patchState(store, { user, accessToken, error: null });
+      },
 
-    clearError(): void {
-      patchState(store, { error: null });
-    },
-  })),
+      clearError(): void {
+        patchState(store, { error: null });
+      },
+    };
+  }),
 );

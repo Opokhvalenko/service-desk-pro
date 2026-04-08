@@ -17,9 +17,13 @@ export const authGuard: CanActivateFn = async () => {
 };
 
 export const roleGuard = (allowed: UserRole[]): CanActivateFn => {
-  return () => {
+  return async () => {
     const store = inject(AuthStore);
     const router = inject(Router);
+    if (!store.isAuthenticated()) {
+      // authGuard may still be hydrating in parallel — try refresh ourselves
+      await store.refresh();
+    }
     const role = store.role();
     if (role && allowed.includes(role)) return true;
     return router.createUrlTree(['/tickets']);

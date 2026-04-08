@@ -1,5 +1,5 @@
 import type { Routes } from '@angular/router';
-import { authGuard, guestGuard } from './core/auth/auth.guard';
+import { authGuard, guestGuard, roleGuard } from './core/auth/auth.guard';
 
 export const routes: Routes = [
   {
@@ -23,6 +23,20 @@ export const routes: Routes = [
     canActivate: [authGuard],
     loadComponent: () =>
       import('./features/tickets/ticket-detail.page').then((m) => m.TicketDetailPage),
+  },
+  {
+    path: 'admin',
+    canActivate: [authGuard, roleGuard(['ADMIN'])],
+    loadComponent: () =>
+      import('./features/admin/admin-layout.component').then((m) => m.AdminLayoutComponent),
+    children: [
+      { path: '', pathMatch: 'full', redirectTo: 'users' },
+      {
+        path: 'users',
+        loadComponent: () =>
+          import('./features/admin/admin-users.page').then((m) => m.AdminUsersPage),
+      },
+    ],
   },
   { path: '', pathMatch: 'full', redirectTo: 'tickets' },
   {

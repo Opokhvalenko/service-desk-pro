@@ -18,6 +18,7 @@ import { RealtimeModule } from './modules/realtime/realtime.module';
 import { SlaModule } from './modules/sla/sla.module';
 import { StatsModule } from './modules/stats/stats.module';
 import { TicketsModule } from './modules/tickets/tickets.module';
+import { UsersModule } from './modules/users/users.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { TicketsModule } from './modules/tickets/tickets.module';
     RedisModule,
     CloudinaryModule,
     AuthModule,
+    UsersModule,
     SlaModule,
     TicketsModule,
     AttachmentsModule,
