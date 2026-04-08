@@ -25,6 +25,22 @@
   justify-content: center;
 }
 
+.quick-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  .quick-btn {
+    justify-content: flex-start;
+    border-radius: 0.625rem !important;
+    font-weight: 600 !important;
+
+    mat-icon {
+      margin-right: 0.4rem;
+    }
+  }
+}
+
 .reopen-banner {
   display: flex;
   align-items: center;

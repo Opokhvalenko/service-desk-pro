@@ -27,6 +27,13 @@ import { TicketsService } from '../../core/tickets/tickets.service';
 import { TicketsStore } from '../../core/tickets/tickets.store';
 import { AppToolbarComponent } from '../../shared/app-toolbar/app-toolbar.component';
 
+interface QuickAction {
+  label: string;
+  icon: string;
+  kind: 'claim' | 'status';
+  target?: TicketStatus;
+}
+
 @Component({
   selector: 'app-ticket-detail',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -94,6 +101,105 @@ export class TicketDetailPage implements OnInit, OnDestroy {
     const t = this.ticket();
     return !!t && (t.status === 'RESOLVED' || t.status === 'CLOSED');
   });
+
+  /** Suggested next-step actions based on role + current status. */
+  protected readonly quickActions = computed<QuickAction[]>(() => {
+    const t = this.ticket();
+    const role = this.auth.role();
+    const me = this.auth.user();
+    if (!t || !role || role === 'REQUESTER') return [];
+
+    const isAssignedToMe = !!me && t.assignee?.id === me.id;
+    const out: QuickAction[] = [];
+
+    if (!t.assignee) {
+      out.push({ label: 'Take ticket', icon: 'pan_tool', kind: 'claim' });
+    }
+
+    switch (t.status) {
+      case 'NEW':
+        out.push({ label: 'Open', icon: 'lock_open', kind: 'status', target: 'OPEN' });
+        out.push({
+          label: 'Start work',
+          icon: 'play_arrow',
+          kind: 'status',
+          target: 'IN_PROGRESS',
+        });
+        break;
+      case 'OPEN':
+        out.push({
+          label: 'Start work',
+          icon: 'play_arrow',
+          kind: 'status',
+          target: 'IN_PROGRESS',
+        });
+        out.push({
+          label: 'Wait for customer',
+          icon: 'hourglass_top',
+          kind: 'status',
+          target: 'WAITING_FOR_CUSTOMER',
+        });
+        break;
+      case 'IN_PROGRESS':
+        out.push({ label: 'Resolve', icon: 'check_circle', kind: 'status', target: 'RESOLVED' });
+        out.push({
+          label: 'Wait for customer',
+          icon: 'hourglass_top',
+          kind: 'status',
+          target: 'WAITING_FOR_CUSTOMER',
+        });
+        if (role === 'TEAM_LEAD' || role === 'ADMIN') {
+          out.push({
+            label: 'Escalate',
+            icon: 'priority_high',
+            kind: 'status',
+            target: 'ESCALATED',
+          });
+        }
+        break;
+      case 'WAITING_FOR_CUSTOMER':
+        out.push({
+          label: 'Resume work',
+          icon: 'play_arrow',
+          kind: 'status',
+          target: 'IN_PROGRESS',
+        });
+        out.push({ label: 'Resolve', icon: 'check_circle', kind: 'status', target: 'RESOLVED' });
+        break;
+      case 'ESCALATED':
+        out.push({
+          label: 'Resume work',
+          icon: 'play_arrow',
+          kind: 'status',
+          target: 'IN_PROGRESS',
+        });
+        out.push({ label: 'Resolve', icon: 'check_circle', kind: 'status', target: 'RESOLVED' });
+        break;
+      case 'RESOLVED':
+        out.push({ label: 'Close ticket', icon: 'lock', kind: 'status', target: 'CLOSED' });
+        break;
+      case 'REOPENED':
+        out.push({
+          label: 'Start work',
+          icon: 'play_arrow',
+          kind: 'status',
+          target: 'IN_PROGRESS',
+        });
+        break;
+    }
+
+    return out.filter((a) => !(a.kind === 'claim' && isAssignedToMe));
+  });
+
+  protected async runQuickAction(action: QuickAction): Promise<void> {
+    if (action.kind === 'claim') {
+      await this.claimSelf();
+      return;
+    }
+    if (action.kind === 'status' && action.target) {
+      await this.store.changeStatus(this.id(), action.target);
+    }
+  }
 
   protected async reopen(): Promise<void> {
     await this.store.changeStatus(this.id(), 'REOPENED');

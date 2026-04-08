@@ -145,12 +145,6 @@
                 }
               </mat-select>
             </mat-form-field>
-            @if (!ticket()!.assignee) {
-              <button mat-stroked-button type="button" (click)="claimSelf()" class="full-btn">
-                <mat-icon>pan_tool</mat-icon>
-                Claim this ticket
-              </button>
-            }
           } @else {
             <div class="assignee-display">
               <mat-icon>person</mat-icon>
@@ -159,9 +153,29 @@
           }
         </mat-card>
 
+        @if (quickActions().length > 0) {
+          <mat-card appearance="outlined" class="side-card">
+            <h3 class="side-label">Quick actions</h3>
+            <div class="quick-actions">
+              @for (a of quickActions(); track a.label) {
+                <button
+                  mat-flat-button
+                  color="primary"
+                  type="button"
+                  (click)="runQuickAction(a)"
+                  class="quick-btn"
+                >
+                  <mat-icon>{{ a.icon }}</mat-icon>
+                  {{ a.label }}
+                </button>
+              }
+            </div>
+          </mat-card>
+        }
+
         @if (canChangeStatus() && availableTransitions().length > 0) {
           <mat-card appearance="outlined" class="side-card">
-            <h3 class="side-label">Status</h3>
+            <h3 class="side-label">Change status manually</h3>
             <mat-form-field appearance="outline" class="full">
               <mat-label>Change status</mat-label>
               <mat-select
