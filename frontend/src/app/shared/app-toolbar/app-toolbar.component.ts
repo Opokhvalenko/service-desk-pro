@@ -6,7 +6,7 @@ import { Router } from '@angular/router';
 import { AuthStore } from '../../core/auth/auth.store';
 import { NotificationsBellComponent } from '../notifications-bell/notifications-bell.component';
 
-export type ToolbarSection = 'dashboard' | 'tickets' | 'detail';
+export type ToolbarSection = 'dashboard' | 'tickets' | 'detail' | 'admin';
 
 @Component({
   selector: 'app-toolbar',
@@ -41,6 +41,18 @@ export type ToolbarSection = 'dashboard' | 'tickets' | 'detail';
           <mat-icon>confirmation_number</mat-icon>
           Tickets
         </button>
+        @if (auth.role() === 'ADMIN') {
+          <button
+            mat-button
+            type="button"
+            class="nav-link"
+            [class.active]="active() === 'admin'"
+            (click)="go('/admin/users')"
+          >
+            <mat-icon>admin_panel_settings</mat-icon>
+            Admin
+          </button>
+        }
       </nav>
       <span class="spacer"></span>
       <span class="user-meta">{{ auth.user()?.fullName }} · {{ auth.role() }}</span>
@@ -74,6 +86,12 @@ export type ToolbarSection = 'dashboard' | 'tickets' | 'detail';
           <mat-icon>confirmation_number</mat-icon>
           <span>Tickets</span>
         </button>
+        @if (auth.role() === 'ADMIN') {
+          <button mat-menu-item type="button" (click)="go('/admin/users')">
+            <mat-icon>admin_panel_settings</mat-icon>
+            <span>Admin</span>
+          </button>
+        }
         <button mat-menu-item type="button" (click)="logout()">
           <mat-icon>logout</mat-icon>
           <span>Sign out</span>
@@ -84,7 +102,7 @@ export type ToolbarSection = 'dashboard' | 'tickets' | 'detail';
   styleUrl: './app-toolbar.component.scss',
 })
 export class AppToolbarComponent {
-  readonly active = input.required<ToolbarSection>();
+  readonly active = input<ToolbarSection>('tickets');
 
   protected readonly auth = inject(AuthStore);
   private readonly router = inject(Router);
