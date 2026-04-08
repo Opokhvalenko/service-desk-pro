@@ -157,21 +157,79 @@
 }
 
 .status-chip {
-  &[data-status='NEW'] { background: #eef2ff; color: #4338ca; border-color: #c7d2fe; }
-  &[data-status='OPEN'] { background: #dbeafe; color: #1e40af; border-color: #bfdbfe; }
-  &[data-status='IN_PROGRESS'] { background: #fef3c7; color: #92400e; border-color: #fde68a; }
-  &[data-status='WAITING_FOR_CUSTOMER'] { background: #f3e8ff; color: #6b21a8; border-color: #e9d5ff; }
-  &[data-status='ESCALATED'] { background: #fee2e2; color: #991b1b; border-color: #fecaca; }
-  &[data-status='RESOLVED'] { background: #d1fae5; color: #065f46; border-color: #a7f3d0; }
-  &[data-status='CLOSED'] { background: #e5e7eb; color: #374151; border-color: #d1d5db; }
-  &[data-status='REOPENED'] { background: #ffedd5; color: #9a3412; border-color: #fed7aa; }
+  &[data-status='NEW'] {
+    background: #eef2ff;
+    color: #4338ca;
+    border-color: #c7d2fe;
+  }
+
+  &[data-status='OPEN'] {
+    background: #dbeafe;
+    color: #1e40af;
+    border-color: #bfdbfe;
+  }
+
+  &[data-status='IN_PROGRESS'] {
+    background: #fef3c7;
+    color: #92400e;
+    border-color: #fde68a;
+  }
+
+  &[data-status='WAITING_FOR_CUSTOMER'] {
+    background: #f3e8ff;
+    color: #6b21a8;
+    border-color: #e9d5ff;
+  }
+
+  &[data-status='ESCALATED'] {
+    background: #fee2e2;
+    color: #991b1b;
+    border-color: #fecaca;
+  }
+
+  &[data-status='RESOLVED'] {
+    background: #d1fae5;
+    color: #065f46;
+    border-color: #a7f3d0;
+  }
+
+  &[data-status='CLOSED'] {
+    background: #e5e7eb;
+    color: #374151;
+    border-color: #d1d5db;
+  }
+
+  &[data-status='REOPENED'] {
+    background: #ffedd5;
+    color: #9a3412;
+    border-color: #fed7aa;
+  }
 }
 
 .priority-chip {
-  &[data-priority='LOW'] { background: #f1f5f9; color: #475569; border-color: #e2e8f0; }
-  &[data-priority='MEDIUM'] { background: #dbeafe; color: #1d4ed8; border-color: #bfdbfe; }
-  &[data-priority='HIGH'] { background: #fef3c7; color: #92400e; border-color: #fde68a; }
-  &[data-priority='CRITICAL'] { background: #fee2e2; color: #991b1b; border-color: #fecaca; }
+  &[data-priority='LOW'] {
+    background: #f1f5f9;
+    color: #475569;
+    border-color: #e2e8f0;
+  }
+
+  &[data-priority='MEDIUM'] {
+    background: #dbeafe;
+    color: #1d4ed8;
+    border-color: #bfdbfe;
+  }
+
+  &[data-priority='HIGH'] {
+    background: #fef3c7;
+    color: #92400e;
+    border-color: #fde68a;
+  }
+
+  &[data-priority='CRITICAL'] {
+    background: #fee2e2;
+    color: #991b1b;
+    border-color: #fecaca;
+  }
 }
 
 .sla-breach {

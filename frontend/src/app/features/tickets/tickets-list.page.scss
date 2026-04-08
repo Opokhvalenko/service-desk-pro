@@ -103,6 +103,7 @@
     background: transparent;
   }
 
+  /* stylelint-disable selector-pseudo-element-no-unknown */
   ::ng-deep .mat-mdc-header-row {
     background: #f8fafc;
   }
@@ -119,6 +120,7 @@
     color: #334155;
     border-bottom-color: #f1f5f9;
   }
+  /* stylelint-enable selector-pseudo-element-no-unknown */
 }
 
 .title-cell {
