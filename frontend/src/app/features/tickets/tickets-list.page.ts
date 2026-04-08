@@ -96,6 +96,10 @@ export class TicketsListPage implements OnInit {
     void this.router.navigate(['/tickets', id]);
   }
 
+  protected goToDashboard(): void {
+    void this.router.navigate(['/dashboard']);
+  }
+
   protected openCreateDialog(): void {
     const ref = this.dialog.open(CreateTicketDialog, { width: '32rem' });
     ref.afterClosed().subscribe((created) => {
