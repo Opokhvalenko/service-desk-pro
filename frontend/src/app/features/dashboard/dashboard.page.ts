@@ -1,7 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, type OnInit, signal } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
-import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Router } from '@angular/router';
 import type { ChartConfiguration, ChartData } from 'chart.js';
@@ -9,7 +7,7 @@ import { BaseChartDirective } from 'ng2-charts';
 import { AuthStore } from '../../core/auth/auth.store';
 import { StatsService } from '../../core/stats/stats.service';
 import type { DashboardStats } from '../../core/stats/stats.types';
-import { NotificationsBellComponent } from '../../shared/notifications-bell/notifications-bell.component';
+import { AppToolbarComponent } from '../../shared/app-toolbar/app-toolbar.component';
 
 const STATUS_COLORS: Record<string, string> = {
   NEW: '#6366f1',
@@ -32,21 +30,18 @@ const PRIORITY_COLORS: Record<string, string> = {
 @Component({
   selector: 'app-dashboard',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
-    MatCardModule,
-    MatIconModule,
-    MatButtonModule,
-    MatProgressSpinnerModule,
-    BaseChartDirective,
-    NotificationsBellComponent,
-  ],
+  imports: [MatCardModule, MatProgressSpinnerModule, BaseChartDirective, AppToolbarComponent],
   templateUrl: './dashboard.page.html',
   styleUrl: './dashboard.page.scss',
 })
 export class DashboardPage implements OnInit {
   private readonly api = inject(StatsService);
-  protected readonly auth = inject(AuthStore);
   private readonly router = inject(Router);
+  protected readonly auth = inject(AuthStore);
+
+  protected goToTickets(filter?: { status?: string; statusIn?: string; breached?: boolean }): void {
+    void this.router.navigate(['/tickets'], { queryParams: filter });
+  }
 
   protected readonly stats = signal<DashboardStats | null>(null);
   protected readonly loading = signal(false);
@@ -93,13 +88,5 @@ export class DashboardPage implements OnInit {
     } finally {
       this.loading.set(false);
     }
-  }
-
-  protected goToTickets(): void {
-    void this.router.navigate(['/tickets']);
-  }
-
-  protected logout(): void {
-    void this.auth.logout();
   }
 }

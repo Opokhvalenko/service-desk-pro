@@ -43,6 +43,14 @@ export class TicketsService {
     return firstValueFrom(this.http.patch<Ticket>(`${this.base}/${id}/status`, { status }));
   }
 
+  assignableUsers(): Promise<Array<{ id: string; fullName: string; email: string; role: string }>> {
+    return firstValueFrom(
+      this.http.get<Array<{ id: string; fullName: string; email: string; role: string }>>(
+        `${this.base}/assignable-users`,
+      ),
+    );
+  }
+
   assign(id: string, assigneeId: string | null): Promise<Ticket> {
     return firstValueFrom(this.http.patch<Ticket>(`${this.base}/${id}/assign`, { assigneeId }));
   }

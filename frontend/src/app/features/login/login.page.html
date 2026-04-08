@@ -1,9 +1,10 @@
 <div class="login-shell">
   <mat-card class="login-card" appearance="outlined">
-    <mat-card-header>
-      <mat-card-title>ServiceDesk Pro</mat-card-title>
-      <mat-card-subtitle>Sign in to continue</mat-card-subtitle>
-    </mat-card-header>
+    <div class="brand-head">
+      <span class="brand-mark"><mat-icon>support_agent</mat-icon></span>
+      <h1 class="brand-title">ServiceDesk Pro</h1>
+      <p class="brand-sub">Sign in to continue</p>
+    </div>
 
     <mat-card-content>
       <form [formGroup]="form" (ngSubmit)="onSubmit()" class="login-form">
@@ -55,6 +56,10 @@
           }
         </button>
       </form>
+
+      <div class="demo-banner" role="note">
+        🎭 <strong>Demo environment</strong> — data resets daily at 03:00 UTC
+      </div>
 
       <div class="demo-creds">
         <p><strong>Demo accounts</strong> (password: <code>password123</code>)</p>

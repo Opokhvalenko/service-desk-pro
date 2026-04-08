@@ -35,7 +35,9 @@ export const AuthStore = signalStore(
           accessToken: response.accessToken,
           loading: false,
         });
-        await router.navigate(['/tickets']);
+        const role = response.user.role;
+        const landing = role === 'ADMIN' || role === 'TEAM_LEAD' ? '/dashboard' : '/tickets';
+        await router.navigate([landing]);
       } catch (err) {
         patchState(store, {
           loading: false,

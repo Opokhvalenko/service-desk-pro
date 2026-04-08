@@ -11,8 +11,7 @@ import { MatPaginatorModule, type PageEvent } from '@angular/material/paginator'
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
-import { Router } from '@angular/router';
-import { AuthStore } from '../../core/auth/auth.store';
+import { ActivatedRoute, Router } from '@angular/router';
 import {
   TICKET_PRIORITIES,
   TICKET_STATUSES,
@@ -20,7 +19,7 @@ import {
   type TicketStatus,
 } from '../../core/tickets/ticket.types';
 import { TicketsStore } from '../../core/tickets/tickets.store';
-import { NotificationsBellComponent } from '../../shared/notifications-bell/notifications-bell.component';
+import { AppToolbarComponent } from '../../shared/app-toolbar/app-toolbar.component';
 import { CreateTicketDialog } from './create-ticket.dialog';
 
 @Component({
@@ -29,7 +28,7 @@ import { CreateTicketDialog } from './create-ticket.dialog';
   imports: [
     DatePipe,
     FormsModule,
-    NotificationsBellComponent,
+    AppToolbarComponent,
     MatTableModule,
     MatButtonModule,
     MatIconModule,
@@ -46,8 +45,8 @@ import { CreateTicketDialog } from './create-ticket.dialog';
 })
 export class TicketsListPage implements OnInit {
   protected readonly store = inject(TicketsStore);
-  protected readonly auth = inject(AuthStore);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly dialog = inject(MatDialog);
 
   protected readonly statuses = TICKET_STATUSES;
@@ -64,26 +63,51 @@ export class TicketsListPage implements OnInit {
   protected readonly statusFilter = signal<TicketStatus | ''>('');
   protected readonly priorityFilter = signal<TicketPriority | ''>('');
   protected readonly searchValue = signal('');
+  protected readonly activeFilterLabel = signal<string | null>(null);
 
   ngOnInit(): void {
-    void this.store.loadList({ page: 1, pageSize: 20 });
+    this.route.queryParamMap.subscribe((params) => {
+      const status = params.get('status') as TicketStatus | null;
+      const statusIn = params.get('statusIn');
+      const breached = params.get('breached') === 'true';
+      const priority = params.get('priority') as TicketPriority | null;
+      const search = params.get('search');
+      this.statusFilter.set(status ?? '');
+      this.priorityFilter.set(priority ?? '');
+      this.searchValue.set(search ?? '');
+
+      // Compute human-readable label for active multi/breached filters
+      let label: string | null = null;
+      if (breached) label = 'SLA breached only';
+      else if (statusIn) label = `Active statuses (${statusIn.split(',').length})`;
+      this.activeFilterLabel.set(label);
+
+      void this.store.loadList({
+        page: 1,
+        pageSize: 20,
+        status: status ?? undefined,
+        statusIn: statusIn ?? undefined,
+        breached: breached || undefined,
+        priority: priority ?? undefined,
+        search: search ?? undefined,
+      });
+    });
   }
 
   protected applyFilters(): void {
-    void this.store.loadList({
-      page: 1,
-      pageSize: this.store.pageSize(),
-      status: this.statusFilter() || undefined,
-      priority: this.priorityFilter() || undefined,
-      search: this.searchValue() || undefined,
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: {
+        status: this.statusFilter() || null,
+        priority: this.priorityFilter() || null,
+        search: this.searchValue() || null,
+      },
+      queryParamsHandling: 'merge',
     });
   }
 
   protected resetFilters(): void {
-    this.statusFilter.set('');
-    this.priorityFilter.set('');
-    this.searchValue.set('');
-    void this.store.loadList({ page: 1, pageSize: 20 });
+    void this.router.navigate([], { relativeTo: this.route, queryParams: {} });
   }
 
   protected onPage(event: PageEvent): void {
@@ -98,19 +122,11 @@ export class TicketsListPage implements OnInit {
     void this.router.navigate(['/tickets', id]);
   }
 
-  protected goToDashboard(): void {
-    void this.router.navigate(['/dashboard']);
-  }
-
   protected openCreateDialog(): void {
     const ref = this.dialog.open(CreateTicketDialog, { width: '32rem' });
     ref.afterClosed().subscribe((created) => {
       if (created) void this.store.loadList(this.store.query());
     });
-  }
-
-  protected logout(): void {
-    void this.auth.logout();
   }
 
   protected statusClass(status: TicketStatus): string {

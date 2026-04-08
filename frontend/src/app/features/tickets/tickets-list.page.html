@@ -1,24 +1,17 @@
-<header class="toolbar">
-  <span class="brand">ServiceDesk Pro</span>
-  <nav class="nav">
-    <button mat-button type="button" class="nav-link" (click)="goToDashboard()">
-      <mat-icon>dashboard</mat-icon>
-      Dashboard
-    </button>
-    <button mat-button type="button" class="nav-link active">
-      <mat-icon>confirmation_number</mat-icon>
-      Tickets
-    </button>
-  </nav>
-  <span class="spacer"></span>
-  <span class="user-meta">{{ auth.user()?.fullName }} · {{ auth.role() }}</span>
-  <app-notifications-bell />
-  <button mat-icon-button type="button" (click)="logout()" aria-label="Sign out">
-    <mat-icon>logout</mat-icon>
-  </button>
-</header>
+<app-toolbar active="tickets" />
 
 <main class="page">
+  @if (activeFilterLabel(); as label) {
+    <div class="active-filter-banner">
+      <mat-icon>filter_alt</mat-icon>
+      <span>Filter: <strong>{{ label }}</strong></span>
+      <button mat-button type="button" (click)="resetFilters()">
+        <mat-icon>close</mat-icon>
+        Clear
+      </button>
+    </div>
+  }
+
   <section class="filters">
     <mat-form-field appearance="outline" class="filter-search">
       <mat-label>Search</mat-label>
