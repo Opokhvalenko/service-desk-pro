@@ -34,6 +34,17 @@ export class LoginPage {
     password: ['', [Validators.required, Validators.minLength(8)]],
   });
 
+  protected readonly demoAccounts = [
+    { email: 'admin@servicedesk.com', label: 'Admin' },
+    { email: 'lead@servicedesk.com', label: 'Team Lead' },
+    { email: 'agent@servicedesk.com', label: 'Agent' },
+    { email: 'user@servicedesk.com', label: 'Requester' },
+  ] as const;
+
+  protected fillDemo(email: string): void {
+    this.form.patchValue({ email, password: 'password123' });
+  }
+
   protected async onSubmit(): Promise<void> {
     if (this.form.invalid) {
       this.form.markAllAsTouched();

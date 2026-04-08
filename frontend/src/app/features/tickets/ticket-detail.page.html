@@ -27,7 +27,7 @@
               <span class="meta-divider">·</span>
               <span class="meta-text">
                 Created by <strong>{{ ticket()!.createdBy.fullName }}</strong>
-                {{ ticket()!.createdAt | date: 'medium' }}
+                {{ ticket()!.createdAt | date: 'MMM d, y, h:mm a' }}
               </span>
             </div>
           </header>
@@ -65,7 +65,7 @@
                     @if (c.isInternal) {
                       <span class="internal-tag">internal</span>
                     }
-                    <span class="date">{{ c.createdAt | date: 'short' }}</span>
+                    <span class="date">{{ c.createdAt | date: 'MMM d, y, h:mm a' }}</span>
                   </header>
                   <p>{{ c.body }}</p>
                 </div>
@@ -149,7 +149,7 @@
                 (selectionChange)="onStatusChange($event.value)"
               >
                 <mat-option [value]="ticket()!.status" disabled>
-                  {{ ticket()!.status }} (current)
+                  {{ ticket()!.status }}
                 </mat-option>
                 @for (s of availableTransitions(); track s) {
                   <mat-option [value]="s">{{ s }}</mat-option>
@@ -169,14 +169,14 @@
               </span>
             </dd>
             <dt>Created</dt>
-            <dd>{{ ticket()!.createdAt | date: 'short' }}</dd>
+            <dd>{{ ticket()!.createdAt | date: 'MMM d, y, h:mm a' }}</dd>
             @if (ticket()!.resolvedAt) {
               <dt>Resolved</dt>
-              <dd>{{ ticket()!.resolvedAt | date: 'short' }}</dd>
+              <dd>{{ ticket()!.resolvedAt | date: 'MMM d, y, h:mm a' }}</dd>
             }
             @if (ticket()!.breachedAt) {
               <dt>SLA breach</dt>
-              <dd class="breach-text">{{ ticket()!.breachedAt | date: 'short' }}</dd>
+              <dd class="breach-text">{{ ticket()!.breachedAt | date: 'MMM d, y, h:mm a' }}</dd>
             }
           </dl>
         </mat-card>

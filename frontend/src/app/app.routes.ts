@@ -25,5 +25,8 @@ export const routes: Routes = [
       import('./features/tickets/ticket-detail.page').then((m) => m.TicketDetailPage),
   },
   { path: '', pathMatch: 'full', redirectTo: 'tickets' },
-  { path: '**', redirectTo: 'tickets' },
+  {
+    path: '**',
+    loadComponent: () => import('./features/not-found/not-found.page').then((m) => m.NotFoundPage),
+  },
 ];
