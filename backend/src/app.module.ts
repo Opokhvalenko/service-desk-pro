@@ -6,8 +6,10 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { SentryModule } from '@sentry/nestjs/setup';
 import { LoggerModule } from 'nestjs-pino';
 import { validateEnv } from './config/env.validation';
+import { CloudinaryModule } from './infrastructure/cloudinary/cloudinary.module';
 import { PrismaModule } from './infrastructure/prisma/prisma.module';
 import { RedisModule } from './infrastructure/redis/redis.module';
+import { AttachmentsModule } from './modules/attachments/attachments.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { HealthModule } from './modules/health/health.module';
 import { MailModule } from './modules/mail/mail.module';
@@ -44,9 +46,11 @@ import { TicketsModule } from './modules/tickets/tickets.module';
     CqrsModule.forRoot(),
     PrismaModule,
     RedisModule,
+    CloudinaryModule,
     AuthModule,
     SlaModule,
     TicketsModule,
+    AttachmentsModule,
     StatsModule,
     MailModule,
     NotificationsModule,
