@@ -97,11 +97,14 @@ export class AuthController {
   }
 
   private cookieOptions(): CookieOptions {
+    const secure = this.config.get<string>('COOKIE_SECURE') === 'true';
+    const domain = this.config.get<string>('COOKIE_DOMAIN');
     return {
       httpOnly: true,
-      secure: this.config.get<string>('COOKIE_SECURE') === 'true',
-      sameSite: 'lax',
-      domain: this.config.get<string>('COOKIE_DOMAIN'),
+      secure,
+      // Cross-origin (Vercel → Render) requires SameSite=None + Secure
+      sameSite: secure ? 'none' : 'lax',
+      domain: domain && domain !== '' ? domain : undefined,
       path: '/api/v1/auth',
     };
   }

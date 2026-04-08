@@ -1,0 +1,76 @@
+# Render Infrastructure as Code
+# Reference: https://render.com/docs/blueprint-spec
+#
+# After pushing this file, on Render dashboard click "New + → Blueprint"
+# and pick this repo. Render will pre-create the service from this manifest.
+# You still need to fill secret env vars manually (marked sync: false).
+
+services:
+  - type: web
+    name: service-desk-pro-backend
+    runtime: docker
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    plan: free
+    region: frankfurt
+    branch: main
+    healthCheckPath: /api/v1/health/live
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: API_PREFIX
+        value: api/v1
+      - key: LOG_LEVEL
+        value: info
+      - key: COOKIE_SECURE
+        value: 'true'
+      - key: COOKIE_DOMAIN
+        value: ''
+      - key: JWT_ACCESS_TTL
+        value: 15m
+      - key: JWT_REFRESH_TTL
+        value: 7d
+      - key: MAIL_HOST
+        value: localhost
+      - key: MAIL_PORT
+        value: 1025
+      - key: MAIL_FROM
+        value: noreply@service-desk-pro.com
+      - key: THROTTLE_TTL
+        value: 60
+      - key: THROTTLE_LIMIT
+        value: 100
+      - key: SENTRY_ENVIRONMENT
+        value: production
+      - key: OTEL_SERVICE_NAME
+        value: service-desk-pro-backend
+      - key: OTEL_EXPORTER_OTLP_ENDPOINT
+        value: https://api.eu1.honeycomb.io
+      # ── Secrets (set manually in Render dashboard) ──
+      - key: DATABASE_URL
+        sync: false
+      - key: DIRECT_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: JWT_ACCESS_SECRET
+        sync: false
+      - key: JWT_REFRESH_SECRET
+        sync: false
+      - key: CORS_ORIGIN
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: CLOUDINARY_UPLOAD_PRESET
+        sync: false
+      - key: SENTRY_DSN
+        sync: false
+      - key: OTEL_EXPORTER_OTLP_HEADERS
+        sync: false
