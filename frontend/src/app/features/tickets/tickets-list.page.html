@@ -1,0 +1,124 @@
+<header class="toolbar">
+  <span class="brand">ServiceDesk Pro</span>
+  <span class="spacer"></span>
+  <span class="user-meta">{{ auth.user()?.fullName }} · {{ auth.role() }}</span>
+  <button mat-icon-button type="button" (click)="logout()" aria-label="Sign out">
+    <mat-icon>logout</mat-icon>
+  </button>
+</header>
+
+<main class="page">
+  <section class="filters">
+    <mat-form-field appearance="outline" class="filter-search">
+      <mat-label>Search</mat-label>
+      <input
+        matInput
+        [ngModel]="searchValue()"
+        (ngModelChange)="searchValue.set($event)"
+        (keydown.enter)="applyFilters()"
+        placeholder="Title or description"
+      />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="filter-select">
+      <mat-label>Status</mat-label>
+      <mat-select
+        [ngModel]="statusFilter()"
+        (ngModelChange)="statusFilter.set($event)"
+      >
+        <mat-option value="">All</mat-option>
+        @for (s of statuses; track s) {
+          <mat-option [value]="s">{{ s }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="filter-select">
+      <mat-label>Priority</mat-label>
+      <mat-select
+        [ngModel]="priorityFilter()"
+        (ngModelChange)="priorityFilter.set($event)"
+      >
+        <mat-option value="">All</mat-option>
+        @for (p of priorities; track p) {
+          <mat-option [value]="p">{{ p }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <button mat-flat-button type="button" color="primary" (click)="applyFilters()">
+      <mat-icon>search</mat-icon>
+      Apply
+    </button>
+    <button mat-stroked-button type="button" (click)="resetFilters()">Reset</button>
+
+    <span class="spacer"></span>
+
+    <button mat-flat-button type="button" color="accent" (click)="openCreateDialog()">
+      <mat-icon>add</mat-icon>
+      New ticket
+    </button>
+  </section>
+
+  @if (store.loading()) {
+    <div class="loading"><mat-spinner diameter="40" /></div>
+  } @else if (store.error()) {
+    <div class="error-banner" role="alert">{{ store.error() }}</div>
+  } @else if (store.items().length === 0) {
+    <div class="empty">No tickets found.</div>
+  } @else {
+    <div class="table-wrap">
+      <table mat-table [dataSource]="store.items()">
+        <ng-container matColumnDef="code">
+          <th mat-header-cell *matHeaderCellDef>Code</th>
+          <td mat-cell *matCellDef="let t">{{ t.code }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="title">
+          <th mat-header-cell *matHeaderCellDef>Title</th>
+          <td mat-cell *matCellDef="let t" class="title-cell">{{ t.title }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Status</th>
+          <td mat-cell *matCellDef="let t">
+            <span [class]="statusClass(t.status)">{{ t.status }}</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="priority">
+          <th mat-header-cell *matHeaderCellDef>Priority</th>
+          <td mat-cell *matCellDef="let t">
+            <span [class]="priorityClass(t.priority)">{{ t.priority }}</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="assignee">
+          <th mat-header-cell *matHeaderCellDef>Assignee</th>
+          <td mat-cell *matCellDef="let t">{{ t.assignee?.fullName ?? '—' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="created">
+          <th mat-header-cell *matHeaderCellDef>Created</th>
+          <td mat-cell *matCellDef="let t">{{ t.createdAt | date: 'short' }}</td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr
+          mat-row
+          *matRowDef="let row; columns: displayedColumns"
+          (click)="openTicket(row.id)"
+          class="ticket-row"
+        ></tr>
+      </table>
+    </div>
+
+    <mat-paginator
+      [length]="store.total()"
+      [pageSize]="store.pageSize()"
+      [pageIndex]="store.page() - 1"
+      [pageSizeOptions]="[10, 20, 50]"
+      (page)="onPage($event)"
+    />
+  }
+</main>

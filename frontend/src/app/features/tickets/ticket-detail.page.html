@@ -1,0 +1,125 @@
+<header class="toolbar">
+  <button mat-icon-button type="button" (click)="goBack()" aria-label="Back">
+    <mat-icon>arrow_back</mat-icon>
+  </button>
+  <span class="brand">ServiceDesk Pro</span>
+  <span class="spacer"></span>
+  <span class="user-meta">{{ auth.user()?.fullName }} · {{ auth.role() }}</span>
+</header>
+
+<main class="page">
+  @if (store.currentLoading()) {
+    <div class="loading"><mat-spinner diameter="40" /></div>
+  } @else if (!ticket()) {
+    <div class="empty">Ticket not found.</div>
+  } @else {
+    <mat-card appearance="outlined" class="ticket-card">
+      <mat-card-header>
+        <mat-card-title>
+          <span class="code">{{ ticket()!.code }}</span>
+          {{ ticket()!.title }}
+        </mat-card-title>
+        <mat-card-subtitle>
+          Created by {{ ticket()!.createdBy.fullName }} ·
+          {{ ticket()!.createdAt | date: 'medium' }}
+        </mat-card-subtitle>
+      </mat-card-header>
+
+      <mat-card-content>
+        <div class="meta-row">
+          <span class="status-chip" [attr.data-status]="ticket()!.status">
+            {{ ticket()!.status }}
+          </span>
+          <span class="priority-chip" [attr.data-priority]="ticket()!.priority">
+            {{ ticket()!.priority }}
+          </span>
+          @if (ticket()!.breachedAt) {
+            <span class="sla-breach">SLA BREACHED</span>
+          }
+          <span class="assignee">
+            <mat-icon>person</mat-icon>
+            {{ ticket()!.assignee?.fullName ?? 'Unassigned' }}
+          </span>
+        </div>
+
+        <p class="description">{{ ticket()!.description }}</p>
+
+        @if (canChangeStatus() && availableTransitions().length > 0) {
+          <mat-form-field appearance="outline" class="status-changer">
+            <mat-label>Change status</mat-label>
+            <mat-select
+              [value]="ticket()!.status"
+              (selectionChange)="onStatusChange($event.value)"
+            >
+              <mat-option [value]="ticket()!.status" disabled>
+                {{ ticket()!.status }} (current)
+              </mat-option>
+              @for (s of availableTransitions(); track s) {
+                <mat-option [value]="s">{{ s }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        }
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card appearance="outlined" class="comments-card">
+      <mat-card-header>
+        <mat-card-title>Comments</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        @if ((ticket()!.comments ?? []).length === 0) {
+          <p class="empty-comments">No comments yet.</p>
+        }
+        @for (c of ticket()!.comments ?? []; track c.id) {
+          <article class="comment" [class.internal]="c.isInternal">
+            <header>
+              <strong>{{ c.author?.fullName ?? 'Unknown' }}</strong>
+              <span class="role">{{ c.author?.role }}</span>
+              @if (c.isInternal) {
+                <span class="internal-tag">internal</span>
+              }
+              <span class="date">{{ c.createdAt | date: 'short' }}</span>
+            </header>
+            <p>{{ c.body }}</p>
+          </article>
+        }
+
+        <mat-divider class="divider" />
+
+        <form (submit)="$event.preventDefault(); submitComment()" class="comment-form">
+          <mat-form-field appearance="outline" class="full">
+            <mat-label>Add a comment</mat-label>
+            <textarea
+              matInput
+              rows="3"
+              [ngModel]="newComment()"
+              (ngModelChange)="newComment.set($event)"
+              name="comment"
+            ></textarea>
+          </mat-form-field>
+          <div class="comment-actions">
+            @if (canPostInternal()) {
+              <mat-checkbox
+                [ngModel]="internalNote()"
+                (ngModelChange)="internalNote.set($event)"
+                name="internal"
+              >
+                Internal note
+              </mat-checkbox>
+            }
+            <span class="spacer"></span>
+            <button
+              mat-flat-button
+              color="primary"
+              type="submit"
+              [disabled]="!newComment().trim()"
+            >
+              Post comment
+            </button>
+          </div>
+        </form>
+      </mat-card-content>
+    </mat-card>
+  }
+</main>
