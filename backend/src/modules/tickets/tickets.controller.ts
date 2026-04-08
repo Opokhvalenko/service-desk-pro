@@ -39,6 +39,12 @@ export class TicketsController {
     return this.tickets.list(query, user);
   }
 
+  @Get('assignable-users')
+  @ApiOperation({ summary: 'List users that can be assigned (Agent / Lead / Admin)' })
+  assignableUsers() {
+    return this.tickets.assignableUsers();
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get ticket details with comments' })
   findOne(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
