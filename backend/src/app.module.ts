@@ -10,6 +10,8 @@ import { PrismaModule } from './infrastructure/prisma/prisma.module';
 import { RedisModule } from './infrastructure/redis/redis.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { HealthModule } from './modules/health/health.module';
+import { RealtimeModule } from './modules/realtime/realtime.module';
+import { SlaModule } from './modules/sla/sla.module';
 import { TicketsModule } from './modules/tickets/tickets.module';
 
 @Module({
@@ -40,7 +42,9 @@ import { TicketsModule } from './modules/tickets/tickets.module';
     PrismaModule,
     RedisModule,
     AuthModule,
+    SlaModule,
     TicketsModule,
+    RealtimeModule,
     HealthModule,
   ],
 })
