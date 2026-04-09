@@ -8,6 +8,33 @@
 
 ---
 
+## 🌐 Live demo
+
+- **Frontend:** https://service-desk-pro-sepia.vercel.app
+- **Backend API:** https://service-desk-pro-backend.onrender.com/api/v1
+- **Health check:** https://service-desk-pro-backend.onrender.com/api/v1/health/ready
+- **Swagger:** https://service-desk-pro-backend.onrender.com/api/v1/docs
+
+### Demo accounts (click-to-fill on login screen)
+
+| Role | Email | Password |
+|---|---|---|
+| Admin | `admin@servicedesk.com` | `password123` |
+| Team Lead | `lead@servicedesk.com` | `password123` |
+| Agent | `agent@servicedesk.com` | `password123` |
+| Requester | `user@servicedesk.com` | `password123` |
+
+> ⏱️ **Cold start warning:** the backend runs on Render's free tier, which spins
+> the instance down after 15 minutes of inactivity. The **first request after a
+> period of inactivity can take 30–60 seconds** to wake the service up — this
+> is normal, just retry. Subsequent requests are fast (< 200ms).
+>
+> 🔄 **Demo data resets daily at 03:00 UTC** via a GitHub Actions cron, so feel
+> free to create/delete tickets — everything is restored to a fresh state every
+> morning.
+
+---
+
 ## 🎯 Overview
 
 Enterprise-grade ticket management system for support teams. Requesters create tickets, agents process them under SLA constraints, team leads supervise queues, and admins manage the platform.
