@@ -159,7 +159,7 @@ const TYPE_ICONS: Record<NotificationType, string> = {
         margin: 0;
         font-size: 1.5rem;
         font-weight: 800;
-        color: #0f172a;
+        color: var(--mat-sys-on-surface);
       }
       .filters {
         display: flex;
@@ -174,7 +174,7 @@ const TYPE_ICONS: Record<NotificationType, string> = {
         flex: 1;
       }
       .count {
-        color: #64748b;
+        color: var(--mat-sys-on-surface-variant);
         font-size: 0.85rem;
       }
       .loading {
@@ -194,7 +194,7 @@ const TYPE_ICONS: Record<NotificationType, string> = {
         align-items: center;
         gap: 0.5rem;
         padding: 3rem 0;
-        color: #64748b;
+        color: var(--mat-sys-on-surface-variant);
       }
       .empty mat-icon {
         font-size: 3rem;
@@ -214,14 +214,14 @@ const TYPE_ICONS: Record<NotificationType, string> = {
         align-items: flex-start;
         gap: 0.85rem;
         padding: 0.85rem 1rem;
-        background: #fff;
-        border: 1px solid #e2e8f0;
+        background: var(--mat-sys-surface-container);
+        border: 1px solid var(--mat-sys-outline-variant);
         border-radius: 0.75rem;
         cursor: pointer;
         transition: background 0.15s, border-color 0.15s;
       }
       .item:hover {
-        background: #f8fafc;
+        background: var(--mat-sys-surface-container-low);
         border-color: #cbd5e1;
       }
       .item.unread {
@@ -264,17 +264,17 @@ const TYPE_ICONS: Record<NotificationType, string> = {
       }
       .time {
         font-size: 0.75rem;
-        color: #64748b;
+        color: var(--mat-sys-on-surface-variant);
         margin-left: auto;
       }
       .msg {
         margin: 0;
-        color: #0f172a;
+        color: var(--mat-sys-on-surface);
         font-size: 0.92rem;
         line-height: 1.4;
       }
       .chevron {
-        color: #94a3b8;
+        color: var(--mat-sys-on-surface-variant);
         align-self: center;
       }
     `,

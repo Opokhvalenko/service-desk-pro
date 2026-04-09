@@ -99,7 +99,7 @@
 .brand-sub {
   margin: 0;
   font-size: 0.85rem;
-  color: #64748b;
+  color: var(--mat-sys-on-surface-variant);
 }
 
 .login-form {
@@ -171,12 +171,12 @@
   background: rgb(241 245 249 / 70%);
   border: 1px solid rgb(148 163 184 / 25%);
   font-size: 0.82rem;
-  color: #475569;
+  color: var(--mat-sys-on-surface-variant);
 
   p {
     margin: 0 0 0.5rem;
     font-weight: 600;
-    color: #334155;
+    color: var(--mat-sys-on-surface);
   }
 
   .demo-grid {
@@ -194,7 +194,7 @@
     padding: 0.45rem 0.65rem;
     border-radius: 0.5rem;
     border: 1px solid rgb(148 163 184 / 35%);
-    background: #fff;
+    background: var(--mat-sys-surface-container);
     cursor: pointer;
     text-align: left;
     font: inherit;
@@ -213,7 +213,7 @@
 
     .pill-email {
       font-size: 0.7rem;
-      color: #64748b;
+      color: var(--mat-sys-on-surface-variant);
       overflow: hidden;
       text-overflow: ellipsis;
       max-width: 100%;
@@ -221,7 +221,7 @@
   }
 
   code {
-    background: #fff;
+    background: var(--mat-sys-surface-container);
     padding: 0.1rem 0.4rem;
     border-radius: 0.3rem;
     font-family: ui-monospace, "SF Mono", Menlo, monospace;

@@ -115,10 +115,10 @@ import { AppToolbarComponent } from '../../shared/app-toolbar/app-toolbar.compon
         margin: 0;
         font-size: 1.5rem;
         font-weight: 800;
-        color: #0f172a;
+        color: var(--mat-sys-on-surface);
       }
       .card {
-        background: #fff !important;
+        background: var(--mat-sys-surface-container) !important;
         border-radius: 1rem !important;
         padding: 1.25rem 1.5rem;
       }
@@ -126,7 +126,7 @@ import { AppToolbarComponent } from '../../shared/app-toolbar/app-toolbar.compon
         margin: 0 0 0.75rem;
         font-size: 1.05rem;
         font-weight: 700;
-        color: #0f172a;
+        color: var(--mat-sys-on-surface);
       }
       .info {
         display: grid;
@@ -135,12 +135,12 @@ import { AppToolbarComponent } from '../../shared/app-toolbar/app-toolbar.compon
         margin: 0;
       }
       .info dt {
-        color: #64748b;
+        color: var(--mat-sys-on-surface-variant);
         font-size: 0.85rem;
       }
       .info dd {
         margin: 0;
-        color: #0f172a;
+        color: var(--mat-sys-on-surface);
         font-weight: 600;
       }
       .role-chip {
@@ -158,7 +158,7 @@ import { AppToolbarComponent } from '../../shared/app-toolbar/app-toolbar.compon
       }
       .hint {
         margin: 0 0 0.75rem;
-        color: #64748b;
+        color: var(--mat-sys-on-surface-variant);
         font-size: 0.85rem;
       }
       .form {
