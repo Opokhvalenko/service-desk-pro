@@ -59,6 +59,11 @@ import { NotificationsStore } from '../../core/notifications/notifications.store
           </div>
         </button>
       }
+      <mat-divider />
+      <button mat-menu-item type="button" (click)="viewAll()" class="view-all">
+        <mat-icon>open_in_new</mat-icon>
+        <span>View all notifications</span>
+      </button>
     </mat-menu>
   `,
   styles: `
@@ -129,5 +134,9 @@ export class NotificationsBellComponent implements OnInit {
     if (n.ticketId) {
       void this.router.navigate(['/tickets', n.ticketId]);
     }
+  }
+
+  protected viewAll(): void {
+    void this.router.navigate(['/notifications']);
   }
 }

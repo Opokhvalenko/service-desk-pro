@@ -1,8 +1,12 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import type { AppNotification } from './notification.types';
+import type {
+  AppNotification,
+  ListNotificationsQuery,
+  PagedNotifications,
+} from './notification.types';
 
 @Injectable({ providedIn: 'root' })
 export class NotificationsApiService {
@@ -11,6 +15,15 @@ export class NotificationsApiService {
 
   list(): Promise<AppNotification[]> {
     return firstValueFrom(this.http.get<AppNotification[]>(this.base));
+  }
+
+  listPaged(query: ListNotificationsQuery): Promise<PagedNotifications> {
+    let params = new HttpParams();
+    if (query.page !== undefined) params = params.set('page', String(query.page));
+    if (query.pageSize !== undefined) params = params.set('pageSize', String(query.pageSize));
+    if (query.type !== undefined) params = params.set('type', query.type);
+    if (query.isRead !== undefined) params = params.set('isRead', String(query.isRead));
+    return firstValueFrom(this.http.get<PagedNotifications>(`${this.base}/paged`, { params }));
   }
 
   unreadCount(): Promise<{ count: number }> {
