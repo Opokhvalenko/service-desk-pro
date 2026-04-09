@@ -21,40 +21,108 @@ Enterprise-grade ticket management system for support teams. Requesters create t
 - 📊 Dashboard analytics + reports
 - 🔔 Real-time updates via WebSockets
 - 📜 Centralized audit log
-- 🌍 i18n (EN + UA)
-- 🌗 Light / dark / high-contrast themes
-- ♿ WCAG 2.1 AA accessibility
+- 🌍 i18n (EN + UA, runtime switch)
+- 🌗 Light / dark themes (Material 3, `prefers-color-scheme` aware, persisted)
+- 📈 Prometheus metrics + OpenTelemetry tracing
+- 🏥 Health checks (`/health/live`, `/health/ready`)
+
+---
+
+## 📸 Screenshots
+
+### Authentication & Dashboard
+
+| Login | Dashboard (Admin) |
+|---|---|
+| ![Login](./docs/screenshots/01-login.png) | ![Dashboard](./docs/screenshots/02-dashboard-admin.png) |
+
+### Tickets
+
+| Tickets list | Ticket detail (with SLA breach + Quick actions) |
+|---|---|
+| ![Tickets list](./docs/screenshots/03-tickets-list-admin.png) | ![Ticket detail](./docs/screenshots/04-ticket-detail-admin.png) |
+
+| Queue (unassigned) | My tickets |
+|---|---|
+| ![Queue](./docs/screenshots/05-queue.png) | ![My tickets](./docs/screenshots/06-my-tickets.png) |
+
+| New ticket dialog |
+|---|
+| ![New ticket](./docs/screenshots/19-new-ticket-dialog.png) |
+
+### Reports & Notifications
+
+| Reports (KPIs + 4 charts + agent workload) |
+|---|
+| ![Reports](./docs/screenshots/07-reports.png) |
+
+| Notifications | Profile |
+|---|---|
+| ![Notifications](./docs/screenshots/13-notifications.png) | ![Profile](./docs/screenshots/14-profile.png) |
+
+### Admin
+
+| Users | Categories |
+|---|---|
+| ![Users](./docs/screenshots/08-admin-users.png) | ![Categories](./docs/screenshots/09-admin-categories.png) |
+
+| Teams | SLA policies |
+|---|---|
+| ![Teams](./docs/screenshots/10-admin-teams.png) | ![SLA](./docs/screenshots/11-admin-sla.png) |
+
+| Audit log |
+|---|
+| ![Audit log](./docs/screenshots/12-admin-audit-log.png) |
+
+### Theme & i18n
+
+| Dashboard — Dark mode (EN) | Dashboard — Dark mode (UA) |
+|---|---|
+| ![Dark EN](./docs/screenshots/15-dashboard-dark.png) | ![Dark UA](./docs/screenshots/16-dashboard-dark-uk.png) |
+
+### RBAC — same app, different roles
+
+| Requester (2 nav items) | Agent (4 nav items) |
+|---|---|
+| ![Requester](./docs/screenshots/17-requester-tickets.png) | ![Agent](./docs/screenshots/18-agent-tickets.png) |
+
+> Notice how `Queue`, `My tickets`, `Reports` and `Admin` appear/disappear from the toolbar based on the signed-in role — driven by the `*hasPermission` directive backed by a single `PERMISSION_MATRIX` constant. See [ADR 0003 — RBAC strategy](./docs/adr/0003-rbac-strategy.md).
 
 ---
 
 ## 🛠️ Tech Stack
 
 ### Frontend
-- **Angular 19** (standalone, signals, control flow)
+- **Angular 21** (standalone components, signals, control flow `@if/@for/@defer`)
 - **TypeScript** strict mode
-- **Angular Material** + CDK + Animations (custom theme)
-- **NgRx Signal Store** + Component Store
-- **Socket.io-client** for real-time
-- **Sentry** for error tracking + session replay
-- **PWA** (Service Worker, offline support)
-- **@angular/localize** (EN + UA)
-- **Vitest** + **Playwright**
+- **Angular Material 3** (`mat.theme()`, dark/light via `data-theme`)
+- **Signals + service stores** (no NgRx — `inject()` + `signal()` / `computed()`)
+- **Custom directives & pipes** — `*hasRole`, `*hasPermission`, `timeAgo`, `slaStatus`
+- **Socket.io-client** for realtime ticket rooms
+- **PWA** — Service Worker via `@angular/service-worker` (`ngsw-config.json`)
+- **Custom i18n** — `I18nStore` + `TranslatePipe` (EN + UA, runtime locale switch)
+- **Sentry** for error tracking
+- **chart.js + ng2-charts** for dashboard / reports
+- **Vitest** + **Playwright** (MCP-driven E2E)
 
 ### Backend
-- **NestJS 10** (modules, DI, Guards, Pipes, Interceptors)
+- **NestJS 11** (modules, DI, Guards, Pipes, Interceptors, Filters)
 - **TypeScript** strict mode
-- **Prisma** + **PostgreSQL** (Neon)
-- **Redis** (Upstash) — cache + BullMQ queues
-- **BullMQ** — background jobs (SLA checker, notifications, audit, email)
-- **Socket.io** — WebSocket gateway
-- **CQRS** pattern for tickets module
-- **JWT** (access + refresh, httpOnly cookie)
-- **argon2** password hashing
-- **class-validator** + **class-transformer**
-- **Swagger** API docs
-- **Pino** structured logging
-- **OpenTelemetry** (Honeycomb)
+- **Prisma 6** + **PostgreSQL** (Neon)
+- **Redis** (ioredis) — Socket.io adapter + Throttler counters
+- **In-process SLA scheduler** (`@Cron('*/60 * * * * *')`) — see [ADR 0005](./docs/adr/0005-sla-scheduler-in-process.md)
+- **Socket.io** — WebSocket gateway with per-ticket rooms
+- **JWT** (access 15m + refresh 7d httpOnly cookie) + **argon2** hashing
+- **`@nestjs/throttler`** — global rate limit + 5/min on auth endpoints
+- **Request-ID middleware** — `x-request-id` correlation across logs + error envelope
+- **`@nestjs/terminus`** health checks (`/health/live`, `/health/ready` with DB + Redis ping)
+- **Prometheus metrics** via `prom-client` at `/metrics` (HTTP counters + histograms + ticket transitions + SLA breaches)
+- **OpenTelemetry** auto-instrumentation
 - **Sentry** error tracking
+- **Pino** structured logging (with `requestId` correlation)
+- **`@nestjs/swagger`** API docs at `/api/docs`
+- **class-validator** + **class-transformer**
+- **Cloudinary** for attachments (magic-bytes validation server-side)
 
 ### Storage & Infrastructure
 - **PostgreSQL** — Neon (Frankfurt)
@@ -72,15 +140,16 @@ Enterprise-grade ticket management system for support teams. Requesters create t
 
 ```
 service-desk-pro/
-├── frontend/                Angular 19 app
-├── backend/                 NestJS app
+├── frontend/                Angular 21 app (standalone, signals, Material 3)
+├── backend/                 NestJS 11 app (Prisma, JWT, Socket.io, SLA cron)
 ├── docs/
-│   ├── adr/                 Architecture Decision Records
-│   ├── ARCHITECTURE.md      C4 diagrams + data flow
-│   ├── API.md               API documentation
-│   └── walkthrough.md       Demo walkthrough
+│   ├── adr/                 Architecture Decision Records (5)
+│   ├── ARCHITECTURE.md      C4 diagrams + module layout + cross-cutting concerns
+│   └── screenshots/         README screenshots
 ├── .github/workflows/       CI/CD pipelines
-├── docker-compose.yml       Local dev environment
+├── docker-compose.yml       Local dev environment (PG + Redis + Mailhog)
+├── render.yaml              Render Blueprint for backend deploy
+├── DEPLOY.md                Deployment runbook
 └── README.md
 ```
 
@@ -145,11 +214,15 @@ npm run e2e            # playwright
 
 ## 📚 Documentation
 
-- [Architecture (C4 + data flow)](./docs/ARCHITECTURE.md)
-- [API Reference](./docs/API.md)
+- [Architecture (C4 Context + Container diagrams)](./docs/ARCHITECTURE.md)
 - [Architecture Decision Records](./docs/adr/)
-- [Demo Walkthrough](./docs/walkthrough.md)
-- [Contributing Guide](./CONTRIBUTING.md)
+  - [ADR 0001 — NestJS for backend](./docs/adr/0001-use-nestjs-for-backend.md)
+  - [ADR 0002 — Prisma over TypeORM](./docs/adr/0002-prisma-over-typeorm.md)
+  - [ADR 0003 — RBAC strategy (roles + permission matrix)](./docs/adr/0003-rbac-strategy.md)
+  - [ADR 0004 — Cloudinary for attachments](./docs/adr/0004-cloudinary-for-attachments.md)
+  - [ADR 0005 — In-process SLA scheduler (no BullMQ)](./docs/adr/0005-sla-scheduler-in-process.md)
+- API reference — interactive Swagger at `/api/docs` when the backend is running
+- [Deployment guide](./DEPLOY.md)
 
 ---
 
