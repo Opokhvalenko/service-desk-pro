@@ -23,9 +23,18 @@ import {
 } from '../../common/events/ticket.events';
 import type { JwtPayload } from '../auth';
 
+// CORS for the WebSocket gateway must mirror the HTTP CORS in `main.ts` —
+// otherwise a malicious origin could open a WS, complete the JWT handshake,
+// and subscribe to ticket rooms via CSRF. Read at module load time because the
+// `@WebSocketGateway` decorator is evaluated before any DI is available.
+const WS_CORS_ORIGIN: string[] | string =
+  process.env.CORS_ORIGIN?.split(',')
+    .map((o) => o.trim())
+    .filter(Boolean) ?? 'http://localhost:4200';
+
 @WebSocketGateway({
   namespace: '/ws',
-  cors: { origin: true, credentials: true },
+  cors: { origin: WS_CORS_ORIGIN, credentials: true },
 })
 export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect {
   private readonly logger = new Logger(RealtimeGateway.name);

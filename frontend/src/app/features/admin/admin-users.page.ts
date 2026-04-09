@@ -1,5 +1,13 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject, type OnInit, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  inject,
+  type OnInit,
+  signal,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
@@ -220,6 +228,7 @@ export class AdminUsersPage implements OnInit {
   private readonly api = inject(UsersService);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(MatSnackBar);
+  private readonly destroyRef = inject(DestroyRef);
 
   protected readonly users = signal<AdminUser[]>([]);
   protected readonly loading = signal(true);
@@ -247,22 +256,25 @@ export class AdminUsersPage implements OnInit {
       width: '28rem',
       data: { user: null },
     });
-    ref.afterClosed().subscribe(async (result: UserFormResult | undefined) => {
-      if (!result?.email || !result.password) return;
-      try {
-        await this.api.create({
-          email: result.email,
-          password: result.password,
-          fullName: result.fullName,
-          role: result.role,
-          isActive: result.isActive,
-        });
-        this.snack.open('User created', 'Close', { duration: 2500 });
-        await this.reload();
-      } catch {
-        this.snack.open('Failed to create user', 'Close', { duration: 3000 });
-      }
-    });
+    ref
+      .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(async (result: UserFormResult | undefined) => {
+        if (!result?.email || !result.password) return;
+        try {
+          await this.api.create({
+            email: result.email,
+            password: result.password,
+            fullName: result.fullName,
+            role: result.role,
+            isActive: result.isActive,
+          });
+          this.snack.open('User created', 'Close', { duration: 2500 });
+          await this.reload();
+        } catch {
+          this.snack.open('Failed to create user', 'Close', { duration: 3000 });
+        }
+      });
   }
 
   protected openEdit(user: AdminUser): void {
@@ -270,20 +282,23 @@ export class AdminUsersPage implements OnInit {
       width: '28rem',
       data: { user },
     });
-    ref.afterClosed().subscribe(async (result: UserFormResult | undefined) => {
-      if (!result) return;
-      try {
-        await this.api.update(user.id, {
-          fullName: result.fullName,
-          role: result.role,
-          isActive: result.isActive,
-        });
-        this.snack.open('User updated', 'Close', { duration: 2500 });
-        await this.reload();
-      } catch {
-        this.snack.open('Failed to update user', 'Close', { duration: 3000 });
-      }
-    });
+    ref
+      .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(async (result: UserFormResult | undefined) => {
+        if (!result) return;
+        try {
+          await this.api.update(user.id, {
+            fullName: result.fullName,
+            role: result.role,
+            isActive: result.isActive,
+          });
+          this.snack.open('User updated', 'Close', { duration: 2500 });
+          await this.reload();
+        } catch {
+          this.snack.open('Failed to update user', 'Close', { duration: 3000 });
+        }
+      });
   }
 
   protected async deactivate(user: AdminUser): Promise<void> {

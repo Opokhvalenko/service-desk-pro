@@ -1,6 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
+import type { AuthenticatedUser } from '../auth/types/auth.types';
 import type { ListAuditDto } from './dto/list-audit.dto';
 
 const ACTOR_SELECT = {
@@ -37,7 +38,27 @@ export class AuditService {
     return { items, total, page, pageSize };
   }
 
-  listForTicket(ticketId: string) {
+  async listForTicket(ticketId: string, user: AuthenticatedUser) {
+    // Enforce ticket-level access: requesters can only see audit history of
+    // tickets they created; agents only see assigned-to-them or unassigned;
+    // leads + admins see everything. Without this guard any authenticated user
+    // could enumerate audit history of arbitrary tickets.
+    const ticket = await this.prisma.ticket.findUnique({
+      where: { id: ticketId },
+      select: { createdById: true, assigneeId: true },
+    });
+    if (!ticket) throw new NotFoundException('Ticket not found');
+
+    const role = user.role;
+    const allowed =
+      role === 'ADMIN' ||
+      role === 'TEAM_LEAD' ||
+      (role === 'REQUESTER' && ticket.createdById === user.id) ||
+      (role === 'AGENT' && (ticket.assigneeId === user.id || ticket.assigneeId === null));
+    if (!allowed) {
+      throw new ForbiddenException('Not allowed to view audit history for this ticket');
+    }
+
     return this.prisma.auditLog.findMany({
       where: {
         OR: [

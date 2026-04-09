@@ -1,7 +1,9 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
@@ -33,11 +35,30 @@ const TICKET_INCLUDE = {
 
 @Injectable()
 export class TicketsService {
+  private readonly logger = new Logger(TicketsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly events: EventEmitter2,
     private readonly sla: SlaService,
   ) {}
+
+  /**
+   * Wraps `EventEmitter2.emit` so a crashing listener never breaks the
+   * write-path that fired the event. The ticket has already been persisted at
+   * this point — we just want to broadcast best-effort and log if the
+   * downstream notification/audit/realtime listener throws.
+   */
+  private safeEmit(event: string, payload: unknown): void {
+    try {
+      this.events.emit(event, payload);
+    } catch (err) {
+      this.logger.error(
+        `Listener for ${event} threw: ${(err as Error).message}`,
+        (err as Error).stack,
+      );
+    }
+  }
 
   async create(dto: CreateTicketDto, user: AuthenticatedUser) {
     const ticket = await this.prisma.ticket.create({
@@ -57,7 +78,7 @@ export class TicketsService {
       number: ticket.number,
       createdById: user.id,
     };
-    this.events.emit(TICKET_EVENTS.CREATED, created);
+    this.safeEmit(TICKET_EVENTS.CREATED, created);
 
     const fresh = await this.prisma.ticket.findUniqueOrThrow({
       where: { id: ticket.id },
@@ -102,7 +123,7 @@ export class TicketsService {
     ]);
 
     return {
-      items: items.map((t) => this.serialize(t)),
+      items: items.map((t) => this.maskRequesterPii(this.serialize(t), user)),
       total,
       page: query.page,
       pageSize: query.pageSize,
@@ -168,9 +189,19 @@ export class TicketsService {
       data.closedAt = null;
     }
 
-    const ticket = await this.prisma.ticket.update({
-      where: { id },
+    // Optimistic concurrency: only succeed if the ticket is STILL in the
+    // status we read a moment ago. If a concurrent request already moved it
+    // (e.g. two agents both clicking "Resolve"), `updateMany` returns count=0
+    // and we surface a 409 instead of silently overwriting the other write.
+    const result = await this.prisma.ticket.updateMany({
+      where: { id, status: existing.status },
       data,
+    });
+    if (result.count === 0) {
+      throw new ConflictException('Ticket was modified by another request. Reload and try again.');
+    }
+    const ticket = await this.prisma.ticket.findUniqueOrThrow({
+      where: { id },
       include: TICKET_INCLUDE,
     });
 
@@ -185,7 +216,7 @@ export class TicketsService {
       to: dto.status,
       actorId: user.id,
     };
-    this.events.emit(TICKET_EVENTS.STATUS_CHANGED, payload);
+    this.safeEmit(TICKET_EVENTS.STATUS_CHANGED, payload);
     return this.serialize(ticket);
   }
 
@@ -234,7 +265,7 @@ export class TicketsService {
       assigneeId: dto.assigneeId ?? null,
       actorId: user.id,
     };
-    this.events.emit(TICKET_EVENTS.ASSIGNED, payload);
+    this.safeEmit(TICKET_EVENTS.ASSIGNED, payload);
     return this.serialize(ticket);
   }
 
@@ -264,7 +295,7 @@ export class TicketsService {
       authorId: user.id,
       isInternal,
     };
-    this.events.emit(TICKET_EVENTS.COMMENT_ADDED, payload);
+    this.safeEmit(TICKET_EVENTS.COMMENT_ADDED, payload);
     return comment;
   }
 
@@ -345,5 +376,29 @@ export class TicketsService {
 
   private serialize<T extends { number: number }>(ticket: T) {
     return { ...ticket, code: formatTicketNumber(ticket.number) };
+  }
+
+  /**
+   * Strip the requester's email from list responses for agents who are not
+   * (yet) the assignee — limits PII exposure on the queue / browse views.
+   * Once the agent claims the ticket, the detail endpoint returns the full
+   * email so they can correspond with the requester.
+   *
+   * Admin / team-lead always see full info; requester only ever sees their
+   * own tickets so masking is a no-op for them.
+   */
+  private maskRequesterPii<
+    T extends {
+      assigneeId: string | null;
+      createdBy: { id: string; fullName: string; email: string; role: string } | null;
+    },
+  >(ticket: T, user: AuthenticatedUser): T {
+    if (user.role !== UserRole.AGENT) return ticket;
+    if (ticket.assigneeId === user.id) return ticket;
+    if (!ticket.createdBy) return ticket;
+    return {
+      ...ticket,
+      createdBy: { ...ticket.createdBy, email: '' },
+    };
   }
 }

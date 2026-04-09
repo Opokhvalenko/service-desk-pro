@@ -34,8 +34,16 @@ export class EnvironmentVariables {
   @IsString()
   JWT_ACCESS_SECRET!: string;
 
+  /**
+   * Reserved for future use. Refresh tokens are currently 48-byte opaque
+   * random strings stored as SHA-256 hashes in the `RefreshToken` table — they
+   * are NOT signed JWTs, so no signing secret is required. We keep the env
+   * var optional so that if we ever switch refresh tokens to JWT format the
+   * config plumbing is already in place.
+   */
+  @IsOptional()
   @IsString()
-  JWT_REFRESH_SECRET!: string;
+  JWT_REFRESH_SECRET?: string;
 
   @IsString()
   JWT_ACCESS_TTL = '15m';

@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, inject, type OnInit, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  inject,
+  type OnInit,
+  signal,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
@@ -154,6 +162,7 @@ export class AdminCategoriesPage implements OnInit {
   private readonly api = inject(CategoriesService);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(MatSnackBar);
+  private readonly destroyRef = inject(DestroyRef);
 
   protected readonly categories = signal<AdminCategory[]>([]);
   protected readonly loading = signal(true);
@@ -181,20 +190,23 @@ export class AdminCategoriesPage implements OnInit {
       width: '28rem',
       data: { category: null },
     });
-    ref.afterClosed().subscribe(async (result: CategoryFormResult | undefined) => {
-      if (!result) return;
-      try {
-        await this.api.create({
-          name: result.name,
-          description: result.description || undefined,
-          isActive: result.isActive,
-        });
-        this.snack.open('Category created', 'Close', { duration: 2500 });
-        await this.reload();
-      } catch {
-        this.snack.open('Failed to create category', 'Close', { duration: 3000 });
-      }
-    });
+    ref
+      .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(async (result: CategoryFormResult | undefined) => {
+        if (!result) return;
+        try {
+          await this.api.create({
+            name: result.name,
+            description: result.description || undefined,
+            isActive: result.isActive,
+          });
+          this.snack.open('Category created', 'Close', { duration: 2500 });
+          await this.reload();
+        } catch {
+          this.snack.open('Failed to create category', 'Close', { duration: 3000 });
+        }
+      });
   }
 
   protected openEdit(category: AdminCategory): void {
@@ -202,20 +214,23 @@ export class AdminCategoriesPage implements OnInit {
       width: '28rem',
       data: { category },
     });
-    ref.afterClosed().subscribe(async (result: CategoryFormResult | undefined) => {
-      if (!result) return;
-      try {
-        await this.api.update(category.id, {
-          name: result.name,
-          description: result.description || undefined,
-          isActive: result.isActive,
-        });
-        this.snack.open('Category updated', 'Close', { duration: 2500 });
-        await this.reload();
-      } catch {
-        this.snack.open('Failed to update category', 'Close', { duration: 3000 });
-      }
-    });
+    ref
+      .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(async (result: CategoryFormResult | undefined) => {
+        if (!result) return;
+        try {
+          await this.api.update(category.id, {
+            name: result.name,
+            description: result.description || undefined,
+            isActive: result.isActive,
+          });
+          this.snack.open('Category updated', 'Close', { duration: 2500 });
+          await this.reload();
+        } catch {
+          this.snack.open('Failed to update category', 'Close', { duration: 3000 });
+        }
+      });
   }
 
   protected async deactivate(category: AdminCategory): Promise<void> {

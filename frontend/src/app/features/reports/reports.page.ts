@@ -1,5 +1,12 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject, type OnInit, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  type OnInit,
+  signal,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -9,29 +16,19 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatTableModule } from '@angular/material/table';
-import type { ChartConfiguration, ChartData } from 'chart.js';
 import { BaseChartDirective } from 'ng2-charts';
 import { type ReportSummary, ReportsService } from '../../core/reports/reports.service';
 import { AppToolbarComponent } from '../../shared/app-toolbar/app-toolbar.component';
-
-const STATUS_COLORS: Record<string, string> = {
-  NEW: '#6366f1',
-  OPEN: '#3b82f6',
-  IN_PROGRESS: '#f59e0b',
-  WAITING_FOR_CUSTOMER: '#a855f7',
-  ESCALATED: '#dc2626',
-  RESOLVED: '#10b981',
-  CLOSED: '#6b7280',
-  REOPENED: '#f97316',
-};
-
-const PRIORITY_COLORS: Record<string, string> = {
-  LOW: '#94a3b8',
-  MEDIUM: '#3b82f6',
-  HIGH: '#f59e0b',
-  CRITICAL: '#dc2626',
-};
+import {
+  BAR_OPTIONS,
+  DOUGHNUT_OPTIONS,
+  LINE_OPTIONS,
+  toCategoryChart,
+  toPriorityChart,
+  toStatusChart,
+  toThroughputChart,
+} from './report-chart.helpers';
+import { WorkloadTableComponent } from './workload-table.component';
 
 @Component({
   selector: 'app-reports-page',
@@ -47,9 +44,9 @@ const PRIORITY_COLORS: Record<string, string> = {
     MatFormFieldModule,
     MatInputModule,
     MatDatepickerModule,
-    MatTableModule,
     BaseChartDirective,
     AppToolbarComponent,
+    WorkloadTableComponent,
   ],
   providers: [provideNativeDateAdapter(), { provide: MAT_DATE_LOCALE, useValue: 'en-US' }],
   template: `
@@ -122,72 +119,30 @@ const PRIORITY_COLORS: Record<string, string> = {
           <mat-card appearance="outlined" class="chart-card">
             <h2>Throughput</h2>
             <div class="chart-wrap">
-              <canvas
-                baseChart
-                [type]="'line'"
-                [data]="throughputData()"
-                [options]="lineOptions"
-              ></canvas>
+              <canvas baseChart [type]="'line'" [data]="throughputData()" [options]="lineOptions"></canvas>
             </div>
           </mat-card>
           <mat-card appearance="outlined" class="chart-card">
             <h2>By status</h2>
             <div class="chart-wrap">
-              <canvas
-                baseChart
-                [type]="'doughnut'"
-                [data]="statusData()"
-                [options]="doughnutOptions"
-              ></canvas>
+              <canvas baseChart [type]="'doughnut'" [data]="statusData()" [options]="doughnutOptions"></canvas>
             </div>
           </mat-card>
           <mat-card appearance="outlined" class="chart-card">
             <h2>By priority</h2>
             <div class="chart-wrap">
-              <canvas
-                baseChart
-                [type]="'bar'"
-                [data]="priorityData()"
-                [options]="barOptions"
-              ></canvas>
+              <canvas baseChart [type]="'bar'" [data]="priorityData()" [options]="barOptions"></canvas>
             </div>
           </mat-card>
           <mat-card appearance="outlined" class="chart-card">
             <h2>By category</h2>
             <div class="chart-wrap">
-              <canvas
-                baseChart
-                [type]="'bar'"
-                [data]="categoryData()"
-                [options]="barOptions"
-              ></canvas>
+              <canvas baseChart [type]="'bar'" [data]="categoryData()" [options]="barOptions"></canvas>
             </div>
           </mat-card>
         </div>
 
-        <mat-card appearance="outlined" class="table-card">
-          <h2>Agent workload</h2>
-          @if (d.workload.length === 0) {
-            <p class="muted">No assigned tickets in range.</p>
-          } @else {
-            <table mat-table [dataSource]="d.workload" class="data-table">
-              <ng-container matColumnDef="name">
-                <th mat-header-cell *matHeaderCellDef>Agent</th>
-                <td mat-cell *matCellDef="let r">{{ r.fullName }}</td>
-              </ng-container>
-              <ng-container matColumnDef="open">
-                <th mat-header-cell *matHeaderCellDef>Open</th>
-                <td mat-cell *matCellDef="let r">{{ r.open }}</td>
-              </ng-container>
-              <ng-container matColumnDef="resolved">
-                <th mat-header-cell *matHeaderCellDef>Resolved</th>
-                <td mat-cell *matCellDef="let r">{{ r.resolved }}</td>
-              </ng-container>
-              <tr mat-header-row *matHeaderRowDef="workloadColumns"></tr>
-              <tr mat-row *matRowDef="let row; columns: workloadColumns"></tr>
-            </table>
-          }
-        </mat-card>
+        <app-workload-table [rows]="d.workload" />
 
         <p class="range-note">
           Range: {{ d.range.from | date: 'mediumDate' }} — {{ d.range.to | date: 'mediumDate' }}
@@ -290,23 +245,6 @@ const PRIORITY_COLORS: Record<string, string> = {
         position: relative;
         height: 16rem;
       }
-      .table-card {
-        background: var(--mat-sys-surface-container) !important;
-        border-radius: 1rem !important;
-        padding: 1rem 1.25rem;
-      }
-      .table-card h2 {
-        margin: 0 0 0.75rem;
-        font-size: 1rem;
-        color: var(--mat-sys-on-surface);
-      }
-      .data-table {
-        width: 100%;
-        background: transparent;
-      }
-      .muted {
-        color: var(--mat-sys-on-surface-variant);
-      }
       .range-note {
         text-align: center;
         color: var(--mat-sys-on-surface-variant);
@@ -319,8 +257,6 @@ const PRIORITY_COLORS: Record<string, string> = {
 export class ReportsPage implements OnInit {
   private readonly api = inject(ReportsService);
 
-  protected readonly workloadColumns = ['name', 'open', 'resolved'];
-
   protected readonly data = signal<ReportSummary | null>(null);
   protected readonly loading = signal(true);
   protected readonly error = signal<string | null>(null);
@@ -329,28 +265,27 @@ export class ReportsPage implements OnInit {
   protected fromDate: Date | null = null;
   protected toDate: Date | null = null;
 
-  protected readonly statusData = signal<ChartData<'doughnut'>>({ labels: [], datasets: [] });
-  protected readonly priorityData = signal<ChartData<'bar'>>({ labels: [], datasets: [] });
-  protected readonly categoryData = signal<ChartData<'bar'>>({ labels: [], datasets: [] });
-  protected readonly throughputData = signal<ChartData<'line'>>({ labels: [], datasets: [] });
+  // Chart data is derived from `data()` via `computed()` — no manual sync.
+  protected readonly statusData = computed(() => {
+    const d = this.data();
+    return d ? toStatusChart(d) : { labels: [], datasets: [] };
+  });
+  protected readonly priorityData = computed(() => {
+    const d = this.data();
+    return d ? toPriorityChart(d) : { labels: [], datasets: [] };
+  });
+  protected readonly categoryData = computed(() => {
+    const d = this.data();
+    return d ? toCategoryChart(d) : { labels: [], datasets: [] };
+  });
+  protected readonly throughputData = computed(() => {
+    const d = this.data();
+    return d ? toThroughputChart(d) : { labels: [], datasets: [] };
+  });
 
-  protected readonly doughnutOptions: ChartConfiguration<'doughnut'>['options'] = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: { legend: { position: 'bottom' } },
-  };
-  protected readonly barOptions: ChartConfiguration<'bar'>['options'] = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: { legend: { display: false } },
-    scales: { y: { ticks: { precision: 0 } } },
-  };
-  protected readonly lineOptions: ChartConfiguration<'line'>['options'] = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: { legend: { position: 'bottom' } },
-    scales: { y: { ticks: { precision: 0 } } },
-  };
+  protected readonly doughnutOptions = DOUGHNUT_OPTIONS;
+  protected readonly barOptions = BAR_OPTIONS;
+  protected readonly lineOptions = LINE_OPTIONS;
 
   async ngOnInit(): Promise<void> {
     await this.reload();
@@ -365,56 +300,6 @@ export class ReportsPage implements OnInit {
         to: this.toDate?.toISOString(),
       });
       this.data.set(data);
-      this.statusData.set({
-        labels: data.byStatus.map((r) => r.status),
-        datasets: [
-          {
-            data: data.byStatus.map((r) => r.count),
-            backgroundColor: data.byStatus.map((r) => STATUS_COLORS[r.status] ?? '#94a3b8'),
-          },
-        ],
-      });
-      this.priorityData.set({
-        labels: data.byPriority.map((r) => r.priority),
-        datasets: [
-          {
-            label: 'Tickets',
-            data: data.byPriority.map((r) => r.count),
-            backgroundColor: data.byPriority.map((r) => PRIORITY_COLORS[r.priority] ?? '#94a3b8'),
-          },
-        ],
-      });
-      this.categoryData.set({
-        labels: data.byCategory.map((r) => r.name),
-        datasets: [
-          {
-            label: 'Tickets',
-            data: data.byCategory.map((r) => r.count),
-            backgroundColor: '#6366f1',
-          },
-        ],
-      });
-      this.throughputData.set({
-        labels: data.throughput.map((r) => r.date),
-        datasets: [
-          {
-            label: 'Created',
-            data: data.throughput.map((r) => r.created),
-            borderColor: '#6366f1',
-            backgroundColor: 'rgba(99, 102, 241, 0.15)',
-            tension: 0.3,
-            fill: true,
-          },
-          {
-            label: 'Resolved',
-            data: data.throughput.map((r) => r.resolved),
-            borderColor: '#10b981',
-            backgroundColor: 'rgba(16, 185, 129, 0.15)',
-            tension: 0.3,
-            fill: true,
-          },
-        ],
-      });
     } catch {
       this.error.set('Failed to load reports');
     } finally {

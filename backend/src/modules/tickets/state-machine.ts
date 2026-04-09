@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import { TicketStatus } from '@prisma/client';
 
 /**
@@ -26,7 +27,10 @@ export function canTransition(from: TicketStatus, to: TicketStatus): boolean {
 
 export function assertTransition(from: TicketStatus, to: TicketStatus): void {
   if (!canTransition(from, to)) {
-    throw new Error(`Invalid status transition: ${from} → ${to}`);
+    // BadRequestException so the global exception filter formats it as 400
+    // with the standard error envelope, instead of falling through to a
+    // generic 500 from a plain Error.
+    throw new BadRequestException(`Invalid status transition: ${from} → ${to}`);
   }
 }
 
