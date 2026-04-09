@@ -1,4 +1,9 @@
-import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import type { AuthenticatedUser } from '../auth';
 import type { SlaService } from '../sla/sla.service';
@@ -128,6 +133,62 @@ describe('TicketsService', () => {
         'ticket.status_changed',
         expect.objectContaining({ ticketId: 't1', from: 'NEW', to: 'OPEN' }),
       );
+    });
+  });
+
+  describe('changeStatus — optimistic concurrency', () => {
+    it('returns 409 when a concurrent writer already moved the ticket', async () => {
+      // We read the row at status=NEW, then try to transition NEW→OPEN.
+      // Meanwhile another agent has already moved it to OPEN, so our guarded
+      // updateMany matches zero rows.
+      prisma.ticket.findUnique.mockResolvedValue({ ...baseTicket, status: 'NEW' });
+      prisma.ticket.updateMany.mockResolvedValue({ count: 0 });
+
+      await expect(service.changeStatus('t1', { status: 'OPEN' }, agent)).rejects.toThrow(
+        ConflictException,
+      );
+
+      // Critically: no event is emitted on a lost race — we must not tell
+      // listeners a transition happened when in fact our write was rejected.
+      expect(events.emit).not.toHaveBeenCalledWith('ticket.status_changed', expect.anything());
+    });
+  });
+
+  describe('list — PII masking for AGENT', () => {
+    const otherAgentTicket = {
+      ...baseTicket,
+      id: 't2',
+      assigneeId: 'someone-else',
+      createdBy: { id: 'r1', fullName: 'R', email: 'r@x.com', role: 'REQUESTER' },
+    };
+    const myTicket = {
+      ...baseTicket,
+      id: 't3',
+      assigneeId: 'a1',
+      createdBy: { id: 'r1', fullName: 'R', email: 'r@x.com', role: 'REQUESTER' },
+    };
+
+    beforeEach(() => {
+      prisma.ticket.count.mockResolvedValue(2);
+    });
+
+    it('agent sees masked email on tickets they have not claimed', async () => {
+      prisma.ticket.findMany.mockResolvedValue([otherAgentTicket]);
+      const result = await service.list({ page: 1, pageSize: 20 }, agent);
+      expect(result.items[0].createdBy.email).toBe('');
+      expect(result.items[0].createdBy.fullName).toBe('R');
+    });
+
+    it('agent sees full email on their own assigned tickets', async () => {
+      prisma.ticket.findMany.mockResolvedValue([myTicket]);
+      const result = await service.list({ page: 1, pageSize: 20 }, agent);
+      expect(result.items[0].createdBy.email).toBe('r@x.com');
+    });
+
+    it('admin always sees full email', async () => {
+      prisma.ticket.findMany.mockResolvedValue([otherAgentTicket]);
+      const result = await service.list({ page: 1, pageSize: 20 }, admin);
+      expect(result.items[0].createdBy.email).toBe('r@x.com');
     });
   });
 

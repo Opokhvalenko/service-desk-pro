@@ -18,6 +18,7 @@ const makePrismaMock = () => ({
     update: jest.fn(),
     updateMany: jest.fn(),
   },
+  $transaction: jest.fn().mockImplementation((ops: unknown[]) => Promise.all(ops)),
 });
 
 const makeConfigMock = (): Partial<Mocked<ConfigService>> => ({
@@ -192,6 +193,43 @@ describe('AuthService', () => {
         }),
       );
       expect(result.tokens.refreshToken).toEqual(expect.any(String));
+    });
+  });
+
+  describe('changePassword', () => {
+    it('rejects new password shorter than 8 chars', async () => {
+      await expect(service.changePassword('u1', 'oldpw1234', 'short')).rejects.toThrow(
+        /at least 8/,
+      );
+    });
+
+    it('rejects when current password is wrong', async () => {
+      const hash = await argon2.hash('correctpw1', { type: argon2.argon2id });
+      prisma.user.findUnique.mockResolvedValue({ id: 'u1', passwordHash: hash });
+      await expect(service.changePassword('u1', 'wrongpw11', 'newpw1234')).rejects.toThrow(
+        /Current password is incorrect/,
+      );
+    });
+
+    it('updates password AND revokes refresh tokens in a single transaction', async () => {
+      const hash = await argon2.hash('correctpw1', { type: argon2.argon2id });
+      prisma.user.findUnique.mockResolvedValue({ id: 'u1', passwordHash: hash });
+
+      await service.changePassword('u1', 'correctpw1', 'newpw1234');
+
+      // Both writes must go through $transaction — never split, otherwise a
+      // crash between them leaves the user with a new password but live
+      // refresh tokens.
+      expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+      expect(prisma.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: 'u1' } }),
+      );
+      expect(prisma.refreshToken.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { userId: 'u1', revokedAt: null },
+          data: { revokedAt: expect.any(Date) },
+        }),
+      );
     });
   });
 
