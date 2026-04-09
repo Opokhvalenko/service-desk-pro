@@ -4,7 +4,7 @@
   background:
     radial-gradient(800px 400px at 0% 0%, rgb(99 102 241 / 8%), transparent 60%),
     radial-gradient(600px 300px at 100% 0%, rgb(6 182 212 / 8%), transparent 55%),
-    linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+    var(--mat-sys-surface);
 }
 
 .page {
@@ -47,7 +47,7 @@
   gap: 0.75rem;
   flex-wrap: wrap;
   padding: 1rem 1.25rem 0.25rem;
-  background: #fff;
+  background: var(--mat-sys-surface-container);
   border-radius: 1rem;
   border: 1px solid rgb(226 232 240 / 80%);
   box-shadow: 0 4px 14px -8px rgb(15 23 42 / 15%);
@@ -71,9 +71,9 @@
   padding: 3rem;
   text-align: center;
   border-radius: 1rem;
-  background: #fff;
+  background: var(--mat-sys-surface-container);
   border: 1px solid rgb(226 232 240 / 80%);
-  color: #64748b;
+  color: var(--mat-sys-on-surface-variant);
 }
 
 .loading {
@@ -92,7 +92,7 @@
 }
 
 .table-wrap {
-  background: #fff;
+  background: var(--mat-sys-surface-container);
   border-radius: 1rem;
   overflow: hidden;
   border: 1px solid rgb(226 232 240 / 80%);
@@ -105,11 +105,11 @@
 
   /* stylelint-disable selector-pseudo-element-no-unknown */
   ::ng-deep .mat-mdc-header-row {
-    background: #f8fafc;
+    background: var(--mat-sys-surface-container-low);
   }
 
   ::ng-deep .mat-mdc-header-cell {
-    color: #475569;
+    color: var(--mat-sys-on-surface-variant);
     font-weight: 700;
     font-size: 0.78rem;
     text-transform: uppercase;
@@ -117,8 +117,8 @@
   }
 
   ::ng-deep .mat-mdc-cell {
-    color: #334155;
-    border-bottom-color: #f1f5f9;
+    color: var(--mat-sys-on-surface);
+    border-bottom-color: var(--mat-sys-surface-container);
   }
   /* stylelint-enable selector-pseudo-element-no-unknown */
 }
@@ -136,7 +136,7 @@
   transition: background-color 0.15s ease;
 
   &:hover {
-    background-color: #f8fafc;
+    background-color: var(--mat-sys-surface-container-low);
   }
 }
 
@@ -201,9 +201,9 @@
 }
 
 .priority-low {
-  background: #f1f5f9;
-  color: #475569;
-  border-color: #e2e8f0;
+  background: var(--mat-sys-surface-container);
+  color: var(--mat-sys-on-surface-variant);
+  border-color: var(--mat-sys-outline-variant);
 }
 
 .priority-medium {

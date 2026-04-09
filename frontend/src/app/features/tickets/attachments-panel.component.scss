@@ -1,6 +1,6 @@
 .att-card {
   border-radius: 1rem !important;
-  background: #fff !important;
+  background: var(--mat-sys-surface-container) !important;
   border: 1px solid rgb(226 232 240 / 80%) !important;
   padding: 1.25rem 1.25rem 1rem;
   display: flex;
@@ -22,7 +22,7 @@
   font-size: 0.95rem;
   font-weight: 700;
   letter-spacing: -0.01em;
-  color: #0f172a;
+  color: var(--mat-sys-on-surface);
 
   mat-icon {
     color: #6366f1;
@@ -58,8 +58,8 @@
   padding: 1.5rem 1rem;
   border: 2px dashed rgb(99 102 241 / 35%);
   border-radius: 0.75rem;
-  background: #f8fafc;
-  color: #475569;
+  background: var(--mat-sys-surface-container-low);
+  color: var(--mat-sys-on-surface-variant);
   cursor: pointer;
   transition: background-color 0.18s ease, border-color 0.18s ease;
   text-align: center;
@@ -68,7 +68,7 @@
   &.dragging {
     background: #eef2ff;
     border-color: #6366f1;
-    color: #1e293b;
+    color: var(--mat-sys-on-surface);
   }
 
   .dz-icon {
@@ -80,11 +80,11 @@
 
   .dz-hint {
     font-size: 0.75rem;
-    color: #94a3b8;
+    color: var(--mat-sys-on-surface-variant);
   }
 
   strong {
-    color: #1e293b;
+    color: var(--mat-sys-on-surface);
   }
 }
 
@@ -112,7 +112,7 @@
   gap: 0.6rem;
   padding: 0.5rem 0.7rem;
   border-radius: 0.5rem;
-  background: #f8fafc;
+  background: var(--mat-sys-surface-container-low);
   border: 1px solid rgb(226 232 240 / 80%);
   font-size: 0.83rem;
 
@@ -122,7 +122,7 @@
   }
 
   .att-name {
-    color: #1e293b;
+    color: var(--mat-sys-on-surface);
     text-decoration: none;
     font-weight: 600;
     flex: 1;
@@ -137,13 +137,13 @@
   }
 
   .att-size {
-    color: #94a3b8;
+    color: var(--mat-sys-on-surface-variant);
     font-size: 0.75rem;
     flex-shrink: 0;
   }
 
   .att-meta {
-    color: #64748b;
+    color: var(--mat-sys-on-surface-variant);
     font-size: 0.75rem;
     flex-shrink: 0;
     display: none;

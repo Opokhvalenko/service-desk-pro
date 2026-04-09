@@ -144,7 +144,7 @@ const ACTIONS = ['', 'created', 'updated', 'status_changed', 'assigned'] as cons
     `
       .page-card {
         border-radius: 1rem !important;
-        background: #fff !important;
+        background: var(--mat-sys-surface-container) !important;
         padding: 1.5rem;
       }
       .page-head {
@@ -158,11 +158,11 @@ const ACTIONS = ['', 'created', 'updated', 'status_changed', 'assigned'] as cons
         margin: 0;
         font-size: 1.4rem;
         font-weight: 800;
-        color: #0f172a;
+        color: var(--mat-sys-on-surface);
       }
       .subtitle {
         margin: 0.2rem 0 0;
-        color: #64748b;
+        color: var(--mat-sys-on-surface-variant);
         font-size: 0.85rem;
       }
       .filters {
@@ -177,7 +177,7 @@ const ACTIONS = ['', 'created', 'updated', 'status_changed', 'assigned'] as cons
       .state {
         padding: 2rem;
         text-align: center;
-        color: #64748b;
+        color: var(--mat-sys-on-surface-variant);
       }
       .state.error {
         color: #b91c1c;
@@ -215,28 +215,28 @@ const ACTIONS = ['', 'created', 'updated', 'status_changed', 'assigned'] as cons
       }
       .type {
         font-weight: 600;
-        color: #1e293b;
+        color: var(--mat-sys-on-surface);
         font-size: 0.85rem;
       }
       .id {
         font-size: 0.7rem;
-        color: #64748b;
+        color: var(--mat-sys-on-surface-variant);
       }
       .action-chip {
         padding: 0.2rem 0.55rem;
         border-radius: 0.4rem;
-        background: #f1f5f9;
-        color: #334155;
+        background: var(--mat-sys-surface-container);
+        color: var(--mat-sys-on-surface);
         font-size: 0.78rem;
         font-weight: 600;
       }
       .meta {
         font-size: 0.72rem;
-        color: #475569;
+        color: var(--mat-sys-on-surface-variant);
         word-break: break-all;
       }
       .muted {
-        color: #94a3b8;
+        color: var(--mat-sys-on-surface-variant);
       }
     `,
   ],

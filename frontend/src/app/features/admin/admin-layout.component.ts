@@ -54,7 +54,7 @@ import { AppToolbarComponent } from '../../shared/app-toolbar/app-toolbar.compon
         margin: 0 auto;
       }
       .admin-side {
-        background: #fff;
+        background: var(--mat-sys-surface-container);
         border: 1px solid rgb(226 232 240 / 80%);
         border-radius: 1rem;
         padding: 1.25rem;
@@ -66,7 +66,7 @@ import { AppToolbarComponent } from '../../shared/app-toolbar/app-toolbar.compon
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.05em;
-        color: #64748b;
+        color: var(--mat-sys-on-surface-variant);
       }
       .side-nav {
         display: flex;
@@ -79,15 +79,15 @@ import { AppToolbarComponent } from '../../shared/app-toolbar/app-toolbar.compon
         gap: 0.65rem;
         padding: 0.6rem 0.8rem;
         border-radius: 0.5rem;
-        color: #334155;
+        color: var(--mat-sys-on-surface);
         text-decoration: none;
         font-weight: 600;
         font-size: 0.9rem;
         transition: background-color 0.18s ease, color 0.18s ease;
       }
       .side-link:hover {
-        background: #f1f5f9;
-        color: #1e293b;
+        background: var(--mat-sys-surface-container);
+        color: var(--mat-sys-on-surface);
       }
       .side-link.active {
         background: #eef2ff;

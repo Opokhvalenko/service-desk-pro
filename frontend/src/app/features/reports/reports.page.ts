@@ -216,11 +216,11 @@ const PRIORITY_COLORS: Record<string, string> = {
         margin: 0;
         font-size: 1.5rem;
         font-weight: 800;
-        color: #0f172a;
+        color: var(--mat-sys-on-surface);
       }
       .subtitle {
         margin: 0.2rem 0 0;
-        color: #64748b;
+        color: var(--mat-sys-on-surface-variant);
         font-size: 0.9rem;
       }
       .filters {
@@ -235,7 +235,7 @@ const PRIORITY_COLORS: Record<string, string> = {
       .state {
         padding: 3rem;
         text-align: center;
-        color: #64748b;
+        color: var(--mat-sys-on-surface-variant);
       }
       .state.error {
         color: #b91c1c;
@@ -250,7 +250,7 @@ const PRIORITY_COLORS: Record<string, string> = {
         display: flex;
         flex-direction: column;
         gap: 0.4rem;
-        background: #fff !important;
+        background: var(--mat-sys-surface-container) !important;
         border-radius: 1rem !important;
       }
       .kpi-label {
@@ -258,12 +258,12 @@ const PRIORITY_COLORS: Record<string, string> = {
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.05em;
-        color: #64748b;
+        color: var(--mat-sys-on-surface-variant);
       }
       .kpi-value {
         font-size: 1.85rem;
         font-weight: 800;
-        color: #0f172a;
+        color: var(--mat-sys-on-surface);
       }
       .kpi-value.resolved {
         color: #047857;
@@ -277,39 +277,39 @@ const PRIORITY_COLORS: Record<string, string> = {
         gap: 1rem;
       }
       .chart-card {
-        background: #fff !important;
+        background: var(--mat-sys-surface-container) !important;
         border-radius: 1rem !important;
         padding: 1rem 1.25rem;
       }
       .chart-card h2 {
         margin: 0 0 0.5rem;
         font-size: 1rem;
-        color: #0f172a;
+        color: var(--mat-sys-on-surface);
       }
       .chart-wrap {
         position: relative;
         height: 16rem;
       }
       .table-card {
-        background: #fff !important;
+        background: var(--mat-sys-surface-container) !important;
         border-radius: 1rem !important;
         padding: 1rem 1.25rem;
       }
       .table-card h2 {
         margin: 0 0 0.75rem;
         font-size: 1rem;
-        color: #0f172a;
+        color: var(--mat-sys-on-surface);
       }
       .data-table {
         width: 100%;
         background: transparent;
       }
       .muted {
-        color: #94a3b8;
+        color: var(--mat-sys-on-surface-variant);
       }
       .range-note {
         text-align: center;
-        color: #94a3b8;
+        color: var(--mat-sys-on-surface-variant);
         font-size: 0.78rem;
         margin: 0.5rem 0 0;
       }

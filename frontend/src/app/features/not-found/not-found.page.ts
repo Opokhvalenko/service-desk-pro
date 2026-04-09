@@ -39,7 +39,7 @@ import { Router } from '@angular/router';
       background: linear-gradient(135deg, #eef2ff 0%, #ecfeff 100%);
     }
     .nf-card {
-      background: #fff;
+      background: var(--mat-sys-surface-container);
       border-radius: 1rem;
       padding: 2.5rem 2rem;
       max-width: 28rem;
@@ -58,16 +58,16 @@ import { Router } from '@angular/router';
       margin: 0.5rem 0 0.25rem;
       font-weight: 800;
       letter-spacing: -0.02em;
-      color: #1e293b;
+      color: var(--mat-sys-on-surface);
     }
     .nf-title {
       font-size: 1.15rem;
       font-weight: 600;
-      color: #334155;
+      color: var(--mat-sys-on-surface);
       margin: 0 0 0.5rem;
     }
     .nf-sub {
-      color: #64748b;
+      color: var(--mat-sys-on-surface-variant);
       margin: 0 0 1.5rem;
       line-height: 1.5;
     }

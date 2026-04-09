@@ -100,7 +100,7 @@ const DEFAULTS: Record<TicketPriority, { fr: number; r: number }> = {
     `
       .page-card {
         border-radius: 1rem !important;
-        background: #fff !important;
+        background: var(--mat-sys-surface-container) !important;
         padding: 1.5rem;
       }
       .page-head {
@@ -110,17 +110,17 @@ const DEFAULTS: Record<TicketPriority, { fr: number; r: number }> = {
         margin: 0;
         font-size: 1.4rem;
         font-weight: 800;
-        color: #0f172a;
+        color: var(--mat-sys-on-surface);
       }
       .subtitle {
         margin: 0.2rem 0 0;
-        color: #64748b;
+        color: var(--mat-sys-on-surface-variant);
         font-size: 0.85rem;
       }
       .state {
         padding: 2rem;
         text-align: center;
-        color: #64748b;
+        color: var(--mat-sys-on-surface-variant);
       }
       .state.error {
         color: #b91c1c;
@@ -136,7 +136,7 @@ const DEFAULTS: Record<TicketPriority, { fr: number; r: number }> = {
         align-items: center;
         gap: 1rem;
         padding: 0.5rem 0;
-        border-bottom: 1px solid #f1f5f9;
+        border-bottom: 1px solid var(--mat-sys-surface-container);
       }
       .priority-chip {
         padding: 0.25rem 0.7rem;
@@ -144,8 +144,8 @@ const DEFAULTS: Record<TicketPriority, { fr: number; r: number }> = {
         font-size: 0.75rem;
         font-weight: 700;
         text-align: center;
-        background: #e2e8f0;
-        color: #334155;
+        background: var(--mat-sys-outline-variant);
+        color: var(--mat-sys-on-surface);
       }
       .priority-chip[data-priority='LOW'] {
         background: #dcfce7;

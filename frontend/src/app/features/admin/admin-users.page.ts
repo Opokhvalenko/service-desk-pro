@@ -118,7 +118,7 @@ import { UserFormDialog, type UserFormResult } from './user-form.dialog';
     `
       .page-card {
         border-radius: 1rem !important;
-        background: #fff !important;
+        background: var(--mat-sys-surface-container) !important;
         padding: 1.5rem;
       }
       .page-head {
@@ -132,17 +132,17 @@ import { UserFormDialog, type UserFormResult } from './user-form.dialog';
         margin: 0;
         font-size: 1.4rem;
         font-weight: 800;
-        color: #0f172a;
+        color: var(--mat-sys-on-surface);
       }
       .subtitle {
         margin: 0.2rem 0 0;
-        color: #64748b;
+        color: var(--mat-sys-on-surface-variant);
         font-size: 0.85rem;
       }
       .state {
         padding: 2rem;
         text-align: center;
-        color: #64748b;
+        color: var(--mat-sys-on-surface-variant);
       }
       .state.error {
         color: #b91c1c;
@@ -169,11 +169,11 @@ import { UserFormDialog, type UserFormResult } from './user-form.dialog';
       }
       .full {
         font-weight: 600;
-        color: #1e293b;
+        color: var(--mat-sys-on-surface);
       }
       .email {
         font-size: 0.78rem;
-        color: #64748b;
+        color: var(--mat-sys-on-surface-variant);
         word-break: break-all;
       }
       .users-table .mat-column-name {
@@ -207,7 +207,7 @@ import { UserFormDialog, type UserFormResult } from './user-form.dialog';
         color: #166534;
       }
       .status.inactive {
-        color: #94a3b8;
+        color: var(--mat-sys-on-surface-variant);
       }
       .actions-col {
         width: 6rem;

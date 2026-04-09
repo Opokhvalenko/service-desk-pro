@@ -70,6 +70,24 @@
   flex: 1;
 }
 
+.icon-toggle {
+  color: rgb(255 255 255 / 92%);
+}
+
+.locale-toggle {
+  color: rgb(255 255 255 / 92%);
+  min-width: 0 !important;
+  padding: 0 0.6rem !important;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  border-radius: 999px !important;
+  background: rgb(255 255 255 / 12%);
+}
+
+.locale-toggle:hover {
+  background: rgb(255 255 255 / 22%);
+}
+
 .user-meta,
 .user-meta-btn {
   display: inline-flex;
