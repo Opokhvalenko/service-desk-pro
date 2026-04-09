@@ -112,7 +112,7 @@ function describe(entry: AuditEntry): { icon: string; text: string } {
         font-size: 1rem;
         font-weight: 600;
         margin: 0;
-        color: #0f172a;
+        color: var(--mat-sys-on-surface);
       }
       .count {
         background: #eef2ff;
@@ -126,7 +126,7 @@ function describe(entry: AuditEntry): { icon: string; text: string } {
       .error {
         padding: 1rem;
         text-align: center;
-        color: #64748b;
+        color: var(--mat-sys-on-surface-variant);
         font-size: 0.88rem;
       }
       .error {
@@ -169,11 +169,11 @@ function describe(entry: AuditEntry): { icon: string; text: string } {
       .text {
         margin: 0;
         font-size: 0.9rem;
-        color: #0f172a;
+        color: var(--mat-sys-on-surface);
       }
       .date {
         font-size: 0.75rem;
-        color: #64748b;
+        color: var(--mat-sys-on-surface-variant);
       }
     `,
   ],
