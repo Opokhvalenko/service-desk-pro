@@ -86,12 +86,18 @@ export class ReportsService {
       }),
       this.prisma.ticket.count({ where: inRange }),
       this.prisma.ticket.count({ where: { ...inRange, breachedAt: { not: null } } }),
+      // Hard cap: throughput is computed in JS so an unbounded findMany on a
+      // big production DB would OOM the API. 50k tickets covers ~3 years of
+      // a busy team's traffic; for larger ranges this should move to a SQL
+      // aggregation in a follow-up. For the portfolio scale (<100 tickets)
+      // the cap never triggers.
       this.prisma.ticket.findMany({
         where: {
           OR: [{ createdAt: { gte: from, lte: to } }, { resolvedAt: { gte: from, lte: to } }],
           ...teamFilter,
         },
         select: { createdAt: true, resolvedAt: true },
+        take: 50_000,
       }),
     ]);
 
@@ -112,29 +118,33 @@ export class ReportsService {
     }));
 
     const assigneeIds = workloadRaw.map((r) => r.assigneeId).filter((id): id is string => !!id);
-    const assignees = await this.prisma.user.findMany({
-      where: { id: { in: assigneeIds } },
-      select: { id: true, fullName: true },
-    });
+    // Fan out the 3 follow-up queries (assignees + 2 workload groupBys) in
+    // parallel — they're independent and previously serialised round-trips.
+    const [assignees, workloadOpen, workloadResolved] = await Promise.all([
+      this.prisma.user.findMany({
+        where: { id: { in: assigneeIds } },
+        select: { id: true, fullName: true },
+      }),
+      this.prisma.ticket.groupBy({
+        by: ['assigneeId'],
+        where: {
+          ...teamFilter,
+          assigneeId: { in: assigneeIds },
+          status: { notIn: [TicketStatus.RESOLVED, TicketStatus.CLOSED] },
+        },
+        _count: { _all: true },
+      }),
+      this.prisma.ticket.groupBy({
+        by: ['assigneeId'],
+        where: {
+          ...teamFilter,
+          assigneeId: { in: assigneeIds },
+          status: TicketStatus.RESOLVED,
+        },
+        _count: { _all: true },
+      }),
+    ]);
     const assigneeMap = new Map(assignees.map((u) => [u.id, u.fullName]));
-    const workloadOpen = await this.prisma.ticket.groupBy({
-      by: ['assigneeId'],
-      where: {
-        ...teamFilter,
-        assigneeId: { in: assigneeIds },
-        status: { notIn: [TicketStatus.RESOLVED, TicketStatus.CLOSED] },
-      },
-      _count: { _all: true },
-    });
-    const workloadResolved = await this.prisma.ticket.groupBy({
-      by: ['assigneeId'],
-      where: {
-        ...teamFilter,
-        assigneeId: { in: assigneeIds },
-        status: TicketStatus.RESOLVED,
-      },
-      _count: { _all: true },
-    });
     const openMap = new Map(workloadOpen.map((r) => [r.assigneeId ?? '', r._count._all]));
     const resolvedMap = new Map(workloadResolved.map((r) => [r.assigneeId ?? '', r._count._all]));
     const workload = assigneeIds

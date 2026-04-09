@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   Logger,
@@ -188,9 +189,19 @@ export class TicketsService {
       data.closedAt = null;
     }
 
-    const ticket = await this.prisma.ticket.update({
-      where: { id },
+    // Optimistic concurrency: only succeed if the ticket is STILL in the
+    // status we read a moment ago. If a concurrent request already moved it
+    // (e.g. two agents both clicking "Resolve"), `updateMany` returns count=0
+    // and we surface a 409 instead of silently overwriting the other write.
+    const result = await this.prisma.ticket.updateMany({
+      where: { id, status: existing.status },
       data,
+    });
+    if (result.count === 0) {
+      throw new ConflictException('Ticket was modified by another request. Reload and try again.');
+    }
+    const ticket = await this.prisma.ticket.findUniqueOrThrow({
+      where: { id },
       include: TICKET_INCLUDE,
     });
 
