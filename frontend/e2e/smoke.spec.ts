@@ -15,8 +15,11 @@ const PASSWORD = 'password123';
 
 async function login(page: import('@playwright/test').Page, email: string): Promise<void> {
   await page.goto('/login');
-  await page.getByLabel('Email').fill(email);
-  await page.getByLabel('Password', { exact: false }).fill(PASSWORD);
+  // Use role + name (not getByLabel) — Material form field also exposes the
+  // "Toggle password visibility" suffix button under the same label scope,
+  // which makes getByLabel('Password') ambiguous in strict mode.
+  await page.getByRole('textbox', { name: 'Email' }).fill(email);
+  await page.getByRole('textbox', { name: 'Password' }).fill(PASSWORD);
   await page.getByRole('button', { name: /sign in/i }).click();
   await page.waitForURL((url) => !url.pathname.endsWith('/login'));
 }
@@ -32,10 +35,10 @@ test.describe('Smoke flow', () => {
   test('admin sees full toolbar nav including admin + reports', async ({ page }) => {
     await login(page, ADMIN_EMAIL);
     const banner = page.getByRole('banner');
-    await expect(banner.getByRole('button', { name: /tickets/i })).toBeVisible();
-    await expect(banner.getByRole('button', { name: /queue/i })).toBeVisible();
-    await expect(banner.getByRole('button', { name: /reports/i })).toBeVisible();
-    await expect(banner.getByRole('button', { name: /admin/i })).toBeVisible();
+    await expect(banner.getByRole('button', { name: 'Tickets', exact: true })).toBeVisible();
+    await expect(banner.getByRole('button', { name: 'Queue', exact: true })).toBeVisible();
+    await expect(banner.getByRole('button', { name: 'Reports', exact: true })).toBeVisible();
+    await expect(banner.getByRole('button', { name: 'Admin', exact: true })).toBeVisible();
   });
 
   test('agent sees queue + my tickets but not reports/admin', async ({ page }) => {

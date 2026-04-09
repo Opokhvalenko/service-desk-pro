@@ -22,6 +22,12 @@ import type { AuthenticatedUser, TokenPair } from './types/auth.types';
 
 const REFRESH_COOKIE = 'sdp_refresh';
 
+// Per-route auth throttle is configurable so e2e / load tests can raise it.
+// Defaults stay strict (5 login attempts / minute, 10 refresh / minute).
+const AUTH_THROTTLE_LIMIT = Number(process.env.AUTH_THROTTLE_LIMIT ?? 5);
+const AUTH_THROTTLE_TTL = Number(process.env.AUTH_THROTTLE_TTL ?? 60_000);
+const REFRESH_THROTTLE_LIMIT = Number(process.env.REFRESH_THROTTLE_LIMIT ?? 10);
+
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
@@ -31,7 +37,7 @@ export class AuthController {
   ) {}
 
   @Public()
-  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @Throttle({ default: { limit: AUTH_THROTTLE_LIMIT, ttl: AUTH_THROTTLE_TTL } })
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Register a new requester account' })
@@ -49,7 +55,7 @@ export class AuthController {
   }
 
   @Public()
-  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @Throttle({ default: { limit: AUTH_THROTTLE_LIMIT, ttl: AUTH_THROTTLE_TTL } })
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Login with email + password' })
@@ -64,7 +70,7 @@ export class AuthController {
   }
 
   @Public()
-  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  @Throttle({ default: { limit: REFRESH_THROTTLE_LIMIT, ttl: AUTH_THROTTLE_TTL } })
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Rotate refresh token, return new access token' })

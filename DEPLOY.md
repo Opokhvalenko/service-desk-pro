@@ -108,7 +108,82 @@ Render free dynos sleep after 15 minutes idle. To keep the backend warm:
 
 ---
 
-## 4. Codecov
+## 4. GitHub Actions secrets
+
+Some workflows in `.github/workflows/` need access to the production database
+or other external services. Those are stored as **repository secrets** so they
+are never committed and never appear in workflow logs.
+
+### Which secrets the project needs
+
+| Secret | Used by | Where to get it |
+|---|---|---|
+| `DATABASE_URL` | `seed-reset.yml` | Neon → Connection Details → **Pooled** connection (hostname contains `-pooler`) |
+| `DIRECT_URL` | `seed-reset.yml` | Neon → Connection Details → **Direct** connection (hostname WITHOUT `-pooler`) |
+| `CODECOV_TOKEN` | `backend-ci.yml`, `frontend-ci.yml` | Codecov → repo settings → upload token |
+
+`e2e.yml` does **not** need any secret — it spins up a local Postgres + Redis
+inside the runner via `services:` and uses throwaway in-memory secrets.
+
+### How to add a secret (step-by-step)
+
+1. Open the repo on GitHub: `https://github.com/<your-username>/service-desk-pro`
+2. Top tabs → **Settings**
+3. Left sidebar → **Security** group → **Secrets and variables** → **Actions**
+4. Green button **New repository secret** (top right)
+5. Fill the form:
+   - **Name:** the exact secret key (case-sensitive), e.g. `DATABASE_URL`
+   - **Secret:** paste the value with no surrounding quotes and no trailing whitespace
+6. Click **Add secret**
+
+GitHub stores it encrypted. You can never read it back from the UI — only
+overwrite (pencil icon → **Update secret**) or delete it. Workflows access it
+via `${{ secrets.DATABASE_URL }}`.
+
+### Pulling values from your local `.env`
+
+The values for `DATABASE_URL` and `DIRECT_URL` already live in your local
+`backend/.env` (which is gitignored). To copy them into GitHub Secrets without
+exposing them in your terminal history:
+
+```bash
+# print just the value of DATABASE_URL
+grep '^DATABASE_URL=' backend/.env | cut -d= -f2-
+
+# print just the value of DIRECT_URL
+grep '^DIRECT_URL=' backend/.env | cut -d= -f2-
+```
+
+Run each line, copy the output, paste into GitHub. **Strip surrounding quotes
+if your `.env` has them** — GitHub Secrets store the value verbatim.
+
+### Verifying it works
+
+Open the repo → **Actions** tab → click on **Seed reset** in the left sidebar
+→ click the green **Run workflow** button (top right) → **Run workflow**.
+
+A new run appears within ~10 seconds. Wait for the `seed` job to finish:
+
+- ✅ **Green check** = secrets are correct, seed ran successfully.
+- ❌ **Red X** = open the run, click the `seed` job, expand the `Run seed`
+  step, and read the error. The most common mistakes are:
+  - Pooled vs direct URL swapped (Prisma migrations need `DIRECT_URL`)
+  - Forgot `?sslmode=require` at the end (Neon requires SSL)
+  - Pasted URL with surrounding quotes
+  - Pasted URL with trailing newline
+
+After fixing, edit the secret (pencil icon) → **Update secret** → re-run the
+workflow.
+
+### Daily reset cadence
+
+Once secrets are in place, `seed-reset.yml` runs **automatically every day at
+03:00 UTC** via the workflow's `schedule:` trigger. You don't have to do
+anything else — the demo accounts and SLA policies will be re-upserted nightly.
+
+---
+
+## 5. Codecov
 
 1. Sign up at **https://codecov.io** with GitHub.
 2. Add this repo. Copy the **upload token**.
@@ -119,13 +194,13 @@ Render free dynos sleep after 15 minutes idle. To keep the backend warm:
 
 ---
 
-## 5. Sentry verification
+## 6. Sentry verification
 
 After the first deploy, trigger a test error from the backend (e.g. send a malformed request) and check that it shows up in **Sentry → backend project**. The frontend Sentry SDK is initialized at app bootstrap and captures runtime errors automatically.
 
 ---
 
-## 6. Local-equivalent override
+## 7. Local-equivalent override
 
 If you need to point Vercel preview deployments at a local backend (e.g. for manual testing), set `apiUrl` / `wsUrl` via Vercel **Environment Variables** instead of editing `environment.prod.ts`. This requires reading them in code via `import.meta.env` — out of scope for the current build.
 
