@@ -25,6 +25,11 @@ export const routes: Routes = [
       import('./features/tickets/ticket-detail.page').then((m) => m.TicketDetailPage),
   },
   {
+    path: 'reports',
+    canActivate: [authGuard, roleGuard(['ADMIN', 'TEAM_LEAD'])],
+    loadComponent: () => import('./features/reports/reports.page').then((m) => m.ReportsPage),
+  },
+  {
     path: 'admin',
     canActivate: [authGuard, roleGuard(['ADMIN'])],
     loadComponent: () =>

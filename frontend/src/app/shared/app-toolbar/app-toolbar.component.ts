@@ -6,7 +6,7 @@ import { Router } from '@angular/router';
 import { AuthStore } from '../../core/auth/auth.store';
 import { NotificationsBellComponent } from '../notifications-bell/notifications-bell.component';
 
-export type ToolbarSection = 'dashboard' | 'tickets' | 'detail' | 'admin';
+export type ToolbarSection = 'dashboard' | 'tickets' | 'detail' | 'admin' | 'reports';
 
 @Component({
   selector: 'app-toolbar',
@@ -41,6 +41,18 @@ export type ToolbarSection = 'dashboard' | 'tickets' | 'detail' | 'admin';
           <mat-icon>confirmation_number</mat-icon>
           Tickets
         </button>
+        @if (auth.role() === 'ADMIN' || auth.role() === 'TEAM_LEAD') {
+          <button
+            mat-button
+            type="button"
+            class="nav-link"
+            [class.active]="active() === 'reports'"
+            (click)="go('/reports')"
+          >
+            <mat-icon>bar_chart</mat-icon>
+            Reports
+          </button>
+        }
         @if (auth.role() === 'ADMIN') {
           <button
             mat-button
@@ -86,6 +98,12 @@ export type ToolbarSection = 'dashboard' | 'tickets' | 'detail' | 'admin';
           <mat-icon>confirmation_number</mat-icon>
           <span>Tickets</span>
         </button>
+        @if (auth.role() === 'ADMIN' || auth.role() === 'TEAM_LEAD') {
+          <button mat-menu-item type="button" (click)="go('/reports')">
+            <mat-icon>bar_chart</mat-icon>
+            <span>Reports</span>
+          </button>
+        }
         @if (auth.role() === 'ADMIN') {
           <button mat-menu-item type="button" (click)="go('/admin/users')">
             <mat-icon>admin_panel_settings</mat-icon>
