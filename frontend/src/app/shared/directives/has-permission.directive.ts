@@ -53,6 +53,10 @@ export class HasPermissionDirective {
   private viewRef: EmbeddedViewRef<unknown> | null = null;
 
   constructor() {
+    // `effect()` created in an injection context (constructor of an
+    // @Injectable / @Directive) is automatically destroyed when the host
+    // directive is destroyed via the ambient `DestroyRef`. No manual
+    // unsubscribe / takeUntilDestroyed needed.
     effect(() => {
       const role = this.auth.role();
       const allowed =

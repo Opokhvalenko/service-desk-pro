@@ -29,6 +29,9 @@ export class HasRoleDirective {
   private viewRef: EmbeddedViewRef<unknown> | null = null;
 
   constructor() {
+    // `effect()` created in the directive constructor is auto-cleaned via
+    // the ambient DestroyRef when the host element is destroyed. No manual
+    // teardown needed.
     effect(() => {
       const role = this.auth.role();
       const shouldRender = role !== null && this.allowed.includes(role);

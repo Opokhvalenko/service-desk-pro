@@ -44,7 +44,9 @@ export class AllExceptionsFilter implements ExceptionFilter {
       }
     } else if (exception instanceof Error) {
       message = exception.message;
-      this.logger.error(exception.stack);
+      // Include the request id so log lines correlate with the response
+      // envelope and the pino-http access log for the same request.
+      this.logger.error(`[${request.id ?? '-'}] ${exception.message}`, exception.stack);
     }
 
     const body: ErrorResponse = {

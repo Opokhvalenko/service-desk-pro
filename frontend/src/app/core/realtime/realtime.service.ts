@@ -38,6 +38,12 @@ export class RealtimeService {
     });
   }
 
+  // Stored handler refs so we can `.off()` them on disconnect — without this,
+  // a sign-out + sign-in cycle accumulates duplicate listeners on the same
+  // socket instance, and every realtime event triggers N store refreshes.
+  private ticketHandler: ((payload: TicketEventPayload) => void) | null = null;
+  private notificationHandler: ((notif: AppNotification) => void) | null = null;
+
   private connect(token: string): void {
     if (this.socket?.connected) return;
     this.socket = io(environment.wsUrl, {
@@ -53,23 +59,34 @@ export class RealtimeService {
       }
     });
 
-    const handler = (payload: TicketEventPayload) => {
+    this.ticketHandler = (payload: TicketEventPayload) => {
       void this.tickets.refreshTicket(payload.ticketId);
     };
-
-    this.socket.on(TICKET_EVENTS.STATUS_CHANGED, handler);
-    this.socket.on(TICKET_EVENTS.ASSIGNED, handler);
-    this.socket.on(TICKET_EVENTS.COMMENT_ADDED, handler);
-    this.socket.on(TICKET_EVENTS.SLA_BREACHED, handler);
-
-    this.socket.on(NOTIFICATION_EVENTS.NEW, (notif: AppNotification) => {
+    this.notificationHandler = (notif: AppNotification) => {
       this.notifications.addRealtime({ ...notif, isRead: false });
-    });
+    };
+
+    this.socket.on(TICKET_EVENTS.STATUS_CHANGED, this.ticketHandler);
+    this.socket.on(TICKET_EVENTS.ASSIGNED, this.ticketHandler);
+    this.socket.on(TICKET_EVENTS.COMMENT_ADDED, this.ticketHandler);
+    this.socket.on(TICKET_EVENTS.SLA_BREACHED, this.ticketHandler);
+    this.socket.on(NOTIFICATION_EVENTS.NEW, this.notificationHandler);
   }
 
   private disconnect(): void {
+    if (this.socket && this.ticketHandler) {
+      this.socket.off(TICKET_EVENTS.STATUS_CHANGED, this.ticketHandler);
+      this.socket.off(TICKET_EVENTS.ASSIGNED, this.ticketHandler);
+      this.socket.off(TICKET_EVENTS.COMMENT_ADDED, this.ticketHandler);
+      this.socket.off(TICKET_EVENTS.SLA_BREACHED, this.ticketHandler);
+    }
+    if (this.socket && this.notificationHandler) {
+      this.socket.off(NOTIFICATION_EVENTS.NEW, this.notificationHandler);
+    }
     this.socket?.disconnect();
     this.socket = null;
+    this.ticketHandler = null;
+    this.notificationHandler = null;
     this.joinedTicketId = null;
   }
 

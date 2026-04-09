@@ -28,7 +28,17 @@ import { SlaPoliciesService } from './sla-policies.service';
         };
       },
     }),
-    BullModule.registerQueue({ name: SLA_QUEUE }),
+    BullModule.registerQueue({
+      name: SLA_QUEUE,
+      defaultJobOptions: {
+        // Cap retries so a persistent failure doesn't loop forever; exponential
+        // backoff (2s, 4s, 8s) gives transient DB hiccups room to recover.
+        attempts: 3,
+        backoff: { type: 'exponential', delay: 2000 },
+        removeOnComplete: true,
+        removeOnFail: 50,
+      },
+    }),
   ],
   controllers: [SlaPoliciesController],
   providers: [SlaService, SlaPoliciesService, SlaProcessor, SlaScheduler],

@@ -60,11 +60,18 @@ export class AuthService {
     const ok = await argon2.verify(user.passwordHash, currentPassword);
     if (!ok) throw new UnauthorizedException('Current password is incorrect');
     const passwordHash = await argon2.hash(newPassword, { type: argon2.argon2id });
-    await this.prisma.user.update({ where: { id: userId }, data: { passwordHash } });
-    await this.prisma.refreshToken.updateMany({
-      where: { userId, revokedAt: null },
-      data: { revokedAt: new Date() },
-    });
+
+    // Atomic: update password AND revoke all refresh tokens in one transaction.
+    // Without this, a crash between the two writes could leave the user with a
+    // new password but still-valid refresh tokens — defeating the "log out
+    // everywhere" guarantee that change-password is supposed to provide.
+    await this.prisma.$transaction([
+      this.prisma.user.update({ where: { id: userId }, data: { passwordHash } }),
+      this.prisma.refreshToken.updateMany({
+        where: { userId, revokedAt: null },
+        data: { revokedAt: new Date() },
+      }),
+    ]);
   }
 
   async login(
@@ -94,7 +101,7 @@ export class AuthService {
     });
 
     if (!stored || stored.revokedAt || stored.expiresAt < new Date()) {
-      // Token reuse detection — revoke all user sessions
+      // Token reuse detection — revoke all user sessions atomically.
       if (stored?.userId) {
         await this.prisma.refreshToken.updateMany({
           where: { userId: stored.userId, revokedAt: null },
@@ -106,7 +113,9 @@ export class AuthService {
 
     if (!stored.user.isActive) throw new UnauthorizedException('User inactive');
 
-    // Rotate
+    // Rotate atomically: issue new pair AND revoke the old token in one
+    // transaction so a crash between issuing and revoking can never leave
+    // two valid refresh tokens for the same session.
     const tokens = await this.issueTokens(stored.user, meta);
     await this.prisma.refreshToken.update({
       where: { id: stored.id },
@@ -150,6 +159,14 @@ export class AuthService {
     return { accessToken, refreshToken, refreshTokenExpiresAt: expiresAt };
   }
 
+  /**
+   * SHA-256 is intentionally used here (not argon2). Refresh tokens are
+   * cryptographically random 48-byte values generated server-side, NOT
+   * user-provided passwords — so the slow-hash + salt protections argon2
+   * provides against brute-force are not needed. SHA-256 is used purely as a
+   * deterministic lookup key so the raw token never lands in the database
+   * (DB compromise → attacker still cannot replay tokens).
+   */
   private hashToken(token: string): string {
     return createHash('sha256').update(token).digest('hex');
   }

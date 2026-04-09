@@ -4,6 +4,21 @@ import { patchState, signalStore, withComputed, withMethods, withState } from '@
 import { AuthService } from './auth.service';
 import type { AuthUser, LoginCredentials, UserRole } from './auth.types';
 
+/**
+ * Token storage strategy:
+ *
+ * - **Access token** lives ONLY in this in-memory signal — never in
+ *   localStorage / sessionStorage. Reload of the tab clears it; the
+ *   `JwtInterceptor` then triggers a silent refresh against the backend.
+ *   This is intentional: keeping the access token out of `localStorage`
+ *   eliminates the most common XSS exfiltration target.
+ *
+ * - **Refresh token** is set by the backend as an `httpOnly; secure;
+ *   sameSite=lax` cookie scoped to `/api/v1/auth`. The frontend never sees
+ *   it — it just calls `POST /auth/refresh` with `withCredentials: true` and
+ *   the browser attaches the cookie. Token rotation + reuse-detection are
+ *   enforced server-side (see `auth.service.ts#refresh`).
+ */
 interface AuthState {
   user: AuthUser | null;
   accessToken: string | null;
