@@ -2,8 +2,8 @@
 
 > B2B Support Ticket Platform with role-based workflow, SLA engine, and real-time updates.
 
-[![CI](https://github.com/Opokhvalenko/service-desk-pro/actions/workflows/ci.yml/badge.svg)](https://github.com/Opokhvalenko/service-desk-pro/actions)
-[![codecov](https://codecov.io/gh/Opokhvalenko/service-desk-pro/branch/main/graph/badge.svg)](https://codecov.io/gh/Opokhvalenko/service-desk-pro)
+[![Backend CI](https://github.com/Opokhvalenko/service-desk-pro/actions/workflows/backend-ci.yml/badge.svg)](https://github.com/Opokhvalenko/service-desk-pro/actions/workflows/backend-ci.yml)
+[![Frontend CI](https://github.com/Opokhvalenko/service-desk-pro/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/Opokhvalenko/service-desk-pro/actions/workflows/frontend-ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ---
@@ -96,21 +96,23 @@ Enterprise-grade ticket management system for support teams. Requesters create t
 - **Angular 21** (standalone components, signals, control flow `@if/@for/@defer`)
 - **TypeScript** strict mode
 - **Angular Material 3** (`mat.theme()`, dark/light via `data-theme`)
-- **Signals + service stores** (no NgRx — `inject()` + `signal()` / `computed()`)
+- **Tailwind CSS v4** for utility-class styling alongside Material
+- **`@ngrx/signals` `signalStore`** for feature stores (AuthStore, TicketsStore, NotificationsStore)
 - **Custom directives & pipes** — `*hasRole`, `*hasPermission`, `timeAgo`, `slaStatus`
 - **Socket.io-client** for realtime ticket rooms
 - **PWA** — Service Worker via `@angular/service-worker` (`ngsw-config.json`)
 - **Custom i18n** — `I18nStore` + `TranslatePipe` (EN + UA, runtime locale switch)
 - **Sentry** for error tracking
 - **chart.js + ng2-charts** for dashboard / reports
-- **Vitest** + **Playwright** (MCP-driven E2E)
+- **Vitest** for unit / component tests
+- **Playwright** for end-to-end browser tests (smoke flow)
 
 ### Backend
 - **NestJS 11** (modules, DI, Guards, Pipes, Interceptors, Filters)
 - **TypeScript** strict mode
 - **Prisma 6** + **PostgreSQL** (Neon)
-- **Redis** (ioredis) — Socket.io adapter + Throttler counters
-- **In-process SLA scheduler** (`@Cron('*/60 * * * * *')`) — see [ADR 0005](./docs/adr/0005-sla-scheduler-in-process.md)
+- **Redis** (ioredis) — Socket.io adapter, Throttler counters, BullMQ broker
+- **BullMQ** — recurring SLA-check job (`every: 60s`) processed by a `WorkerHost` — see [ADR 0005](./docs/adr/0005-sla-scheduler-in-process.md)
 - **Socket.io** — WebSocket gateway with per-ticket rooms
 - **JWT** (access 15m + refresh 7d httpOnly cookie) + **argon2** hashing
 - **`@nestjs/throttler`** — global rate limit + 5/min on auth endpoints
@@ -131,8 +133,8 @@ Enterprise-grade ticket management system for support teams. Requesters create t
 - **FE deploy** — Vercel
 - **BE deploy** — Render + UptimeRobot keep-alive
 - **Observability** — Sentry + Honeycomb
-- **CI/CD** — GitHub Actions
-- **Containers** — Docker (multi-stage)
+- **CI/CD** — GitHub Actions (separate `backend-ci.yml` + `frontend-ci.yml`, plus a daily `seed-reset.yml` cron)
+- **Containers** — multi-stage `backend/Dockerfile` + multi-stage `frontend/Dockerfile` (nginx)
 
 ---
 
@@ -141,7 +143,7 @@ Enterprise-grade ticket management system for support teams. Requesters create t
 ```
 service-desk-pro/
 ├── frontend/                Angular 21 app (standalone, signals, Material 3)
-├── backend/                 NestJS 11 app (Prisma, JWT, Socket.io, SLA cron)
+├── backend/                 NestJS 11 app (Prisma, JWT, Socket.io, BullMQ SLA scheduler)
 ├── docs/
 │   ├── adr/                 Architecture Decision Records (5)
 │   ├── ARCHITECTURE.md      C4 diagrams + module layout + cross-cutting concerns
@@ -201,13 +203,14 @@ npm start
 ```bash
 # Backend
 cd backend
-npm run test           # unit
-npm run test:e2e       # integration
+npm run test           # Jest unit tests
+npm run test:e2e       # Jest integration tests (test/jest-e2e.json)
+npm run test:cov       # coverage report
 
 # Frontend
 cd frontend
-npm run test           # vitest unit/component
-npm run e2e            # playwright
+npm test               # Vitest unit/component tests
+npm run e2e            # Playwright smoke E2E (requires backend + frontend running)
 ```
 
 ---
@@ -220,7 +223,7 @@ npm run e2e            # playwright
   - [ADR 0002 — Prisma over TypeORM](./docs/adr/0002-prisma-over-typeorm.md)
   - [ADR 0003 — RBAC strategy (roles + permission matrix)](./docs/adr/0003-rbac-strategy.md)
   - [ADR 0004 — Cloudinary for attachments](./docs/adr/0004-cloudinary-for-attachments.md)
-  - [ADR 0005 — In-process SLA scheduler (no BullMQ)](./docs/adr/0005-sla-scheduler-in-process.md)
+  - [ADR 0005 — BullMQ recurring job for SLA (vs delayed-job-per-deadline)](./docs/adr/0005-sla-scheduler-in-process.md)
 - API reference — interactive Swagger at `/api/docs` when the backend is running
 - [Deployment guide](./DEPLOY.md)
 
@@ -235,7 +238,7 @@ npm run e2e            # playwright
 | Agent | agent@servicedesk.com | password123 |
 | Requester | user@servicedesk.com | password123 |
 
-> Demo data resets daily at 03:00 UTC.
+> Demo data resets daily at 03:00 UTC via the `seed-reset.yml` GitHub Actions workflow (idempotent `prisma db seed`). You can also re-run `npx prisma db seed` locally any time.
 
 ---
 
