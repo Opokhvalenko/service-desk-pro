@@ -10,6 +10,7 @@ import { CloudinaryModule } from './infrastructure/cloudinary/cloudinary.module'
 import { PrismaModule } from './infrastructure/prisma/prisma.module';
 import { RedisModule } from './infrastructure/redis/redis.module';
 import { AttachmentsModule } from './modules/attachments/attachments.module';
+import { AuditModule } from './modules/audit/audit.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { HealthModule } from './modules/health/health.module';
@@ -57,6 +58,7 @@ import { UsersModule } from './modules/users/users.module';
     SlaModule,
     TicketsModule,
     AttachmentsModule,
+    AuditModule,
     StatsModule,
     MailModule,
     NotificationsModule,

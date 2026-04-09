@@ -29,6 +29,10 @@ import { AppToolbarComponent } from '../../shared/app-toolbar/app-toolbar.compon
             <mat-icon>schedule</mat-icon>
             <span>SLA policies</span>
           </a>
+          <a routerLink="/admin/audit-log" routerLinkActive="active" class="side-link">
+            <mat-icon>history</mat-icon>
+            <span>Audit log</span>
+          </a>
         </nav>
       </aside>
       <main class="admin-main">

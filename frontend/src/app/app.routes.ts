@@ -50,6 +50,11 @@ export const routes: Routes = [
         path: 'sla',
         loadComponent: () => import('./features/admin/admin-sla.page').then((m) => m.AdminSlaPage),
       },
+      {
+        path: 'audit-log',
+        loadComponent: () =>
+          import('./features/admin/admin-audit-log.page').then((m) => m.AdminAuditLogPage),
+      },
     ],
   },
   { path: '', pathMatch: 'full', redirectTo: 'tickets' },
