@@ -13,3 +13,17 @@ export interface AppNotification {
   isRead: boolean;
   createdAt: string;
 }
+
+export interface ListNotificationsQuery {
+  page?: number;
+  pageSize?: number;
+  type?: NotificationType;
+  isRead?: boolean;
+}
+
+export interface PagedNotifications {
+  items: AppNotification[];
+  total: number;
+  page: number;
+  pageSize: number;
+}

@@ -14,6 +14,7 @@ export type ToolbarSection =
   | 'reports'
   | 'queue'
   | 'my-tickets'
+  | 'notifications'
   | 'profile';
 
 @Component({

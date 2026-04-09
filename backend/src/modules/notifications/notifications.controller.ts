@@ -1,6 +1,7 @@
-import { Controller, Get, HttpCode, HttpStatus, Param, Patch } from '@nestjs/common';
+import { Controller, Get, HttpCode, HttpStatus, Param, Patch, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { type AuthenticatedUser, CurrentUser } from '../auth';
+import { ListNotificationsDto } from './dto/list-notifications.dto';
 import { NotificationsService } from './notifications.service';
 
 @ApiTags('notifications')
@@ -13,6 +14,12 @@ export class NotificationsController {
   @ApiOperation({ summary: 'List recent notifications for current user' })
   list(@CurrentUser() user: AuthenticatedUser) {
     return this.notifications.list(user, 20);
+  }
+
+  @Get('paged')
+  @ApiOperation({ summary: 'List notifications with pagination and filters' })
+  listPaged(@CurrentUser() user: AuthenticatedUser, @Query() query: ListNotificationsDto) {
+    return this.notifications.listPaged(user, query);
   }
 
   @Get('unread-count')

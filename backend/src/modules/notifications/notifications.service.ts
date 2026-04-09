@@ -1,12 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import type { NotificationType } from '@prisma/client';
+import type { NotificationType, Prisma } from '@prisma/client';
 import {
   type NewNotificationPayload,
   NOTIFICATION_EVENTS,
 } from '../../common/events/notification.events';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import type { AuthenticatedUser } from '../auth';
+import type { ListNotificationsDto } from './dto/list-notifications.dto';
 
 interface CreateNotificationInput {
   userId: string;
@@ -48,6 +49,26 @@ export class NotificationsService {
       orderBy: { createdAt: 'desc' },
       take: limit,
     });
+  }
+
+  async listPaged(user: AuthenticatedUser, query: ListNotificationsDto) {
+    const page = query.page ?? 1;
+    const pageSize = query.pageSize ?? 20;
+    const where: Prisma.NotificationWhereInput = { userId: user.id };
+    if (query.type) where.type = query.type as NotificationType;
+    if (query.isRead !== undefined) where.isRead = query.isRead;
+
+    const [items, total] = await Promise.all([
+      this.prisma.notification.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+      this.prisma.notification.count({ where }),
+    ]);
+
+    return { items, total, page, pageSize };
   }
 
   unreadCount(user: AuthenticatedUser): Promise<number> {
