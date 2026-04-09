@@ -28,8 +28,14 @@ const ACTION_ICONS: Record<string, string> = {
   assigned: 'person_add',
 };
 
+interface TicketMeta {
+  from?: string;
+  to?: string;
+  assigneeId?: string | null;
+}
+
 function describe(entry: AuditEntry): { icon: string; text: string } {
-  const meta = entry.metadata ?? {};
+  const meta = (entry.metadata ?? {}) as TicketMeta;
   if (entry.entityType === 'TicketComment' && entry.action === 'created') {
     return { icon: 'comment', text: 'added a comment' };
   }
@@ -38,12 +44,12 @@ function describe(entry: AuditEntry): { icon: string; text: string } {
       case 'created':
         return { icon: 'add_circle', text: 'created the ticket' };
       case 'status_changed': {
-        const from = (meta['from'] as string | undefined) ?? '?';
-        const to = (meta['to'] as string | undefined) ?? '?';
+        const from = meta.from ?? '?';
+        const to = meta.to ?? '?';
         return { icon: 'sync', text: `changed status ${from} → ${to}` };
       }
       case 'assigned': {
-        const to = (meta['assigneeId'] as string | null) ?? null;
+        const to = meta.assigneeId ?? null;
         return { icon: 'person_add', text: to ? 'assigned the ticket' : 'unassigned the ticket' };
       }
       case 'updated':
@@ -182,7 +188,8 @@ export class ActivityPanelComponent implements OnChanges {
   protected readonly rows = signal<ActivityRow[]>([]);
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['ticketId']) {
+    const ticketIdChange = (changes as { ticketId?: unknown }).ticketId;
+    if (ticketIdChange) {
       void this.load();
     }
   }
