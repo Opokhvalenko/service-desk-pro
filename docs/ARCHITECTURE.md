@@ -43,10 +43,10 @@ title ServiceDesk Pro — Containers
 Person(user, "User", "Requester / Agent / Admin")
 
 Container_Boundary(sdp, "ServiceDesk Pro") {
-  Container(spa, "Frontend SPA", "Angular 21 + Material 3", "Single-page app, served by Vercel CDN")
+  Container(spa, "Frontend SPA", "Angular 21 + Material 3 + Tailwind v4", "Single-page app, served by Vercel CDN")
   Container(api, "API", "NestJS 11 + TypeScript", "REST + WebSocket gateway, RBAC, business logic")
-  ContainerDb(db, "PostgreSQL", "Managed by Neon/Render", "Tickets, users, audit log, SLA policies")
-  ContainerDb(redis, "Redis", "Managed by Render", "Socket.io adapter pub/sub, rate-limit storage")
+  ContainerDb(db, "PostgreSQL", "Managed by Neon", "Tickets, users, audit log, SLA policies")
+  ContainerDb(redis, "Redis", "Managed by Upstash", "Socket.io pub/sub, BullMQ broker, throttle counters")
 }
 
 System_Ext(cloudinary, "Cloudinary", "Attachment storage + CDN")
@@ -55,7 +55,7 @@ System_Ext(mail, "SMTP server", "Outbound mail")
 Rel(user, spa, "Uses", "HTTPS")
 Rel(spa, api, "REST + WebSocket", "HTTPS / WSS")
 Rel(api, db, "Reads / writes", "TCP/SQL via Prisma")
-Rel(api, redis, "Pub/Sub for sockets, throttle counters", "TCP")
+Rel(api, redis, "Pub/Sub for sockets, BullMQ jobs, throttle counters", "TCP")
 Rel(api, cloudinary, "Upload / destroy", "HTTPS")
 Rel(api, mail, "Send", "SMTP")
 ```
@@ -85,7 +85,7 @@ backend/src/
 │   ├── attachments/            # upload + magic-bytes validation
 │   ├── categories/             # admin CRUD
 │   ├── teams/                  # admin CRUD
-│   ├── sla/                    # SLA engine + 60s in-process scheduler
+│   ├── sla/                    # SLA engine + BullMQ recurring scheduler (60s)
 │   ├── audit/                  # audit log read API
 │   ├── stats/                  # dashboard aggregates
 │   ├── reports/                # summary + CSV export
@@ -144,10 +144,10 @@ frontend/src/app/
     └── pipes/             # timeAgo, slaStatus
 ```
 
-State management is **signals + simple stores** (no NgRx). Each store is an
-`@Injectable({providedIn:'root'})` class that exposes `signal()` slices and
-`computed()` derived values, mutated via async methods that call the
-corresponding service.
+State management uses **`@ngrx/signals` `signalStore`** (`AuthStore`,
+`TicketsStore`, `NotificationsStore`) — composed from `withState`,
+`withComputed`, and `withMethods`. Smaller per-feature state lives in plain
+`signal()` / `computed()` inside the components themselves.
 
 ---
 
