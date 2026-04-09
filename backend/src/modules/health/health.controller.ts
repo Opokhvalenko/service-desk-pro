@@ -6,6 +6,7 @@ import {
   type HealthIndicatorResult,
   PrismaHealthIndicator,
 } from '@nestjs/terminus';
+import { SkipThrottle } from '@nestjs/throttler';
 import type Redis from 'ioredis';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { REDIS_CLIENT } from '../../infrastructure/redis/redis.module';
@@ -13,6 +14,7 @@ import { Public } from '../auth/decorators';
 
 @ApiTags('health')
 @Public()
+@SkipThrottle()
 @Controller('health')
 export class HealthController {
   constructor(

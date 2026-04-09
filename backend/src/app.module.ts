@@ -1,10 +1,12 @@
-import { Module } from '@nestjs/common';
+import { type MiddlewareConsumer, Module, type NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
 import { CqrsModule } from '@nestjs/cqrs';
 import { EventEmitterModule } from '@nestjs/event-emitter';
-import { ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { SentryModule } from '@sentry/nestjs/setup';
 import { LoggerModule } from 'nestjs-pino';
+import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 import { validateEnv } from './config/env.validation';
 import { CloudinaryModule } from './infrastructure/cloudinary/cloudinary.module';
 import { PrismaModule } from './infrastructure/prisma/prisma.module';
@@ -35,6 +37,17 @@ import { UsersModule } from './modules/users/users.module';
     LoggerModule.forRoot({
       pinoHttp: {
         level: process.env.LOG_LEVEL ?? 'info',
+        // Reuse the correlation id assigned by RequestIdMiddleware so HTTP logs
+        // and the error envelope (`error.requestId`) line up for tracing.
+        genReqId: (req, res) => {
+          const existing = (req as { id?: string }).id;
+          if (existing) {
+            res.setHeader('x-request-id', existing);
+            return existing;
+          }
+          return undefined as unknown as string;
+        },
+        customProps: (req) => ({ requestId: (req as { id?: string }).id }),
         transport:
           process.env.NODE_ENV === 'development'
             ? { target: 'pino-pretty', options: { singleLine: true } }
@@ -67,5 +80,10 @@ import { UsersModule } from './modules/users/users.module';
     RealtimeModule,
     HealthModule,
   ],
+  providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer): void {
+    consumer.apply(RequestIdMiddleware).forRoutes('*');
+  }
+}
