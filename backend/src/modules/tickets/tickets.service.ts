@@ -123,7 +123,7 @@ export class TicketsService {
     ]);
 
     return {
-      items: items.map((t) => this.serialize(t)),
+      items: items.map((t) => this.maskRequesterPii(this.serialize(t), user)),
       total,
       page: query.page,
       pageSize: query.pageSize,
@@ -376,5 +376,29 @@ export class TicketsService {
 
   private serialize<T extends { number: number }>(ticket: T) {
     return { ...ticket, code: formatTicketNumber(ticket.number) };
+  }
+
+  /**
+   * Strip the requester's email from list responses for agents who are not
+   * (yet) the assignee — limits PII exposure on the queue / browse views.
+   * Once the agent claims the ticket, the detail endpoint returns the full
+   * email so they can correspond with the requester.
+   *
+   * Admin / team-lead always see full info; requester only ever sees their
+   * own tickets so masking is a no-op for them.
+   */
+  private maskRequesterPii<
+    T extends {
+      assigneeId: string | null;
+      createdBy: { id: string; fullName: string; email: string; role: string } | null;
+    },
+  >(ticket: T, user: AuthenticatedUser): T {
+    if (user.role !== UserRole.AGENT) return ticket;
+    if (ticket.assigneeId === user.id) return ticket;
+    if (!ticket.createdBy) return ticket;
+    return {
+      ...ticket,
+      createdBy: { ...ticket.createdBy, email: '' },
+    };
   }
 }

@@ -1,7 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import { type Prisma, TicketStatus } from '@prisma/client';
+import { Prisma, TicketStatus } from '@prisma/client';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import type { ReportQueryDto } from './dto/report-query.dto';
+
+interface WorkloadRow {
+  assigneeId: string;
+  fullName: string;
+  open: bigint;
+  resolved: bigint;
+}
 
 export interface ReportSummary {
   range: { from: string; to: string };
@@ -118,41 +125,34 @@ export class ReportsService {
     }));
 
     const assigneeIds = workloadRaw.map((r) => r.assigneeId).filter((id): id is string => !!id);
-    // Fan out the 3 follow-up queries (assignees + 2 workload groupBys) in
-    // parallel — they're independent and previously serialised round-trips.
-    const [assignees, workloadOpen, workloadResolved] = await Promise.all([
-      this.prisma.user.findMany({
-        where: { id: { in: assigneeIds } },
-        select: { id: true, fullName: true },
-      }),
-      this.prisma.ticket.groupBy({
-        by: ['assigneeId'],
-        where: {
-          ...teamFilter,
-          assigneeId: { in: assigneeIds },
-          status: { notIn: [TicketStatus.RESOLVED, TicketStatus.CLOSED] },
-        },
-        _count: { _all: true },
-      }),
-      this.prisma.ticket.groupBy({
-        by: ['assigneeId'],
-        where: {
-          ...teamFilter,
-          assigneeId: { in: assigneeIds },
-          status: TicketStatus.RESOLVED,
-        },
-        _count: { _all: true },
-      }),
-    ]);
-    const assigneeMap = new Map(assignees.map((u) => [u.id, u.fullName]));
-    const openMap = new Map(workloadOpen.map((r) => [r.assigneeId ?? '', r._count._all]));
-    const resolvedMap = new Map(workloadResolved.map((r) => [r.assigneeId ?? '', r._count._all]));
-    const workload = assigneeIds
-      .map((id) => ({
-        assigneeId: id,
-        fullName: assigneeMap.get(id) ?? 'Unknown',
-        open: openMap.get(id) ?? 0,
-        resolved: resolvedMap.get(id) ?? 0,
+    // One raw SQL query with PostgreSQL FILTER clauses replaces the previous
+    // 3 separate queries (assignees lookup + 2 workload groupBys). FILTER is
+    // ANSI-SQL-2003 and Postgres has had it since 9.4. The Prisma.sql tag
+    // safely interpolates the assigneeIds + optional teamId filter without
+    // SQL injection risk.
+    const teamCond = query.teamId ? Prisma.sql`AND t."teamId" = ${query.teamId}` : Prisma.empty;
+    const workloadRows: WorkloadRow[] =
+      assigneeIds.length === 0
+        ? []
+        : await this.prisma.$queryRaw<WorkloadRow[]>`
+            SELECT
+              t."assigneeId" AS "assigneeId",
+              u."fullName"   AS "fullName",
+              COUNT(*) FILTER (WHERE t.status::text NOT IN ('RESOLVED', 'CLOSED')) AS open,
+              COUNT(*) FILTER (WHERE t.status::text = 'RESOLVED') AS resolved
+            FROM tickets t
+            JOIN users u ON u.id = t."assigneeId"
+            WHERE t."assigneeId" IN (${Prisma.join(assigneeIds)})
+            ${teamCond}
+            GROUP BY t."assigneeId", u."fullName"
+          `;
+    const workload = workloadRows
+      .map((r) => ({
+        assigneeId: r.assigneeId,
+        fullName: r.fullName,
+        // pg returns COUNT() as bigint — coerce to number for JSON.
+        open: Number(r.open),
+        resolved: Number(r.resolved),
       }))
       .sort((a, b) => b.open + b.resolved - (a.open + a.resolved));
 
