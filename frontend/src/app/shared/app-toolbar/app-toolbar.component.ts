@@ -8,6 +8,7 @@ import { AuthStore } from '../../core/auth/auth.store';
 import { I18nStore } from '../../core/i18n/i18n.store';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { ThemeStore } from '../../core/theme/theme.store';
+import { HasPermissionDirective } from '../directives/has-permission.directive';
 import { NotificationsBellComponent } from '../notifications-bell/notifications-bell.component';
 
 export type ToolbarSection =
@@ -31,6 +32,7 @@ export type ToolbarSection =
     MatTooltipModule,
     NotificationsBellComponent,
     TranslatePipe,
+    HasPermissionDirective,
   ],
   template: `
     <header class="toolbar">
@@ -61,7 +63,7 @@ export type ToolbarSection =
           <mat-icon>confirmation_number</mat-icon>
           {{ 'nav.tickets' | tr }}
         </button>
-        @if (auth.role() === 'AGENT' || auth.role() === 'TEAM_LEAD' || auth.role() === 'ADMIN') {
+        <ng-container *hasPermission="'queue.view'">
           <button
             mat-button
             type="button"
@@ -82,31 +84,29 @@ export type ToolbarSection =
             <mat-icon>assignment_ind</mat-icon>
             {{ 'nav.myTickets' | tr }}
           </button>
-        }
-        @if (auth.role() === 'ADMIN' || auth.role() === 'TEAM_LEAD') {
-          <button
-            mat-button
-            type="button"
-            class="nav-link"
-            [class.active]="active() === 'reports'"
-            (click)="go('/reports')"
-          >
-            <mat-icon>bar_chart</mat-icon>
-            {{ 'nav.reports' | tr }}
-          </button>
-        }
-        @if (auth.role() === 'ADMIN') {
-          <button
-            mat-button
-            type="button"
-            class="nav-link"
-            [class.active]="active() === 'admin'"
-            (click)="go('/admin/users')"
-          >
-            <mat-icon>admin_panel_settings</mat-icon>
-            {{ 'nav.admin' | tr }}
-          </button>
-        }
+        </ng-container>
+        <button
+          *hasPermission="'reports.view'"
+          mat-button
+          type="button"
+          class="nav-link"
+          [class.active]="active() === 'reports'"
+          (click)="go('/reports')"
+        >
+          <mat-icon>bar_chart</mat-icon>
+          {{ 'nav.reports' | tr }}
+        </button>
+        <button
+          *hasPermission="'admin.access'"
+          mat-button
+          type="button"
+          class="nav-link"
+          [class.active]="active() === 'admin'"
+          (click)="go('/admin/users')"
+        >
+          <mat-icon>admin_panel_settings</mat-icon>
+          {{ 'nav.admin' | tr }}
+        </button>
       </nav>
       <span class="spacer"></span>
       <button
@@ -168,7 +168,7 @@ export type ToolbarSection =
           <mat-icon>confirmation_number</mat-icon>
           <span>{{ 'nav.tickets' | tr }}</span>
         </button>
-        @if (auth.role() === 'AGENT' || auth.role() === 'TEAM_LEAD' || auth.role() === 'ADMIN') {
+        <ng-container *hasPermission="'queue.view'">
           <button mat-menu-item type="button" (click)="go('/queue')">
             <mat-icon>inbox</mat-icon>
             <span>{{ 'nav.queue' | tr }}</span>
@@ -177,23 +177,19 @@ export type ToolbarSection =
             <mat-icon>assignment_ind</mat-icon>
             <span>{{ 'nav.myTickets' | tr }}</span>
           </button>
-        }
-        @if (auth.role() === 'ADMIN' || auth.role() === 'TEAM_LEAD') {
-          <button mat-menu-item type="button" (click)="go('/reports')">
-            <mat-icon>bar_chart</mat-icon>
-            <span>{{ 'nav.reports' | tr }}</span>
-          </button>
-        }
+        </ng-container>
+        <button *hasPermission="'reports.view'" mat-menu-item type="button" (click)="go('/reports')">
+          <mat-icon>bar_chart</mat-icon>
+          <span>{{ 'nav.reports' | tr }}</span>
+        </button>
         <button mat-menu-item type="button" (click)="go('/profile')">
           <mat-icon>person</mat-icon>
           <span>{{ 'nav.profile' | tr }}</span>
         </button>
-        @if (auth.role() === 'ADMIN') {
-          <button mat-menu-item type="button" (click)="go('/admin/users')">
-            <mat-icon>admin_panel_settings</mat-icon>
-            <span>{{ 'nav.admin' | tr }}</span>
-          </button>
-        }
+        <button *hasPermission="'admin.access'" mat-menu-item type="button" (click)="go('/admin/users')">
+          <mat-icon>admin_panel_settings</mat-icon>
+          <span>{{ 'nav.admin' | tr }}</span>
+        </button>
         <button mat-menu-item type="button" (click)="logout()">
           <mat-icon>logout</mat-icon>
           <span>{{ 'nav.signOut' | tr }}</span>

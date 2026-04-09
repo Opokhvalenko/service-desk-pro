@@ -1,4 +1,3 @@
-import { DatePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -12,6 +11,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { type AuditEntry, AuditService } from '../../core/audit/audit.service';
+import { TimeAgoPipe } from '../../shared/pipes/time-ago.pipe';
 
 interface ActivityRow {
   id: string;
@@ -62,7 +62,7 @@ function describe(entry: AuditEntry): { icon: string; text: string } {
 @Component({
   selector: 'app-activity-panel',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DatePipe, MatCardModule, MatIconModule, MatProgressSpinnerModule],
+  imports: [TimeAgoPipe, MatCardModule, MatIconModule, MatProgressSpinnerModule],
   template: `
     <mat-card appearance="outlined" class="activity-card">
       <header class="head">
@@ -87,7 +87,7 @@ function describe(entry: AuditEntry): { icon: string; text: string } {
                 <p class="text">
                   <strong>{{ r.actor }}</strong> {{ r.text }}
                 </p>
-                <span class="date">{{ r.createdAt | date: 'MMM d, y, h:mm a' }}</span>
+                <span class="date">{{ r.createdAt | timeAgo }}</span>
               </div>
             </li>
           }

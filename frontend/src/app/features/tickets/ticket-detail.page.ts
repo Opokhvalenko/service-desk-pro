@@ -27,6 +27,7 @@ import { TICKET_TRANSITIONS, type TicketStatus } from '../../core/tickets/ticket
 import { TicketsService } from '../../core/tickets/tickets.service';
 import { TicketsStore } from '../../core/tickets/tickets.store';
 import { AppToolbarComponent } from '../../shared/app-toolbar/app-toolbar.component';
+import { SlaCountdownComponent } from '../../shared/sla-countdown/sla-countdown.component';
 import { ActivityPanelComponent } from './activity-panel.component';
 import { AttachmentsPanelComponent } from './attachments-panel.component';
 import { EditTicketDialog } from './edit-ticket.dialog';
@@ -45,6 +46,7 @@ interface QuickAction {
     DatePipe,
     FormsModule,
     AppToolbarComponent,
+    SlaCountdownComponent,
     ActivityPanelComponent,
     AttachmentsPanelComponent,
     MatCardModule,

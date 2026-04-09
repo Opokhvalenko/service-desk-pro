@@ -12,9 +12,10 @@
           <header class="ticket-head">
             <div class="head-row">
               <span class="code">{{ ticket()!.code }}</span>
-              @if (ticket()!.breachedAt) {
-                <span class="sla-breach">SLA BREACHED</span>
-              }
+              <app-sla-countdown
+                [deadline]="ticket()!.resolveDueAt"
+                [breached]="!!ticket()!.breachedAt"
+              />
               <span class="head-spacer"></span>
               @if (canEdit()) {
                 <button
