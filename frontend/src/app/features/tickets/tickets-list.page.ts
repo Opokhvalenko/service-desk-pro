@@ -12,6 +12,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { ActivatedRoute, Router } from '@angular/router';
+import { AuthStore } from '../../core/auth/auth.store';
 import {
   TICKET_PRIORITIES,
   TICKET_STATUSES,
@@ -21,6 +22,8 @@ import {
 import { TicketsStore } from '../../core/tickets/tickets.store';
 import { AppToolbarComponent } from '../../shared/app-toolbar/app-toolbar.component';
 import { CreateTicketDialog } from './create-ticket.dialog';
+
+type ListMode = 'all' | 'queue' | 'my';
 
 @Component({
   selector: 'app-tickets-list',
@@ -48,6 +51,10 @@ export class TicketsListPage implements OnInit {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly dialog = inject(MatDialog);
+  private readonly auth = inject(AuthStore);
+
+  protected readonly mode = signal<ListMode>('all');
+  protected readonly pageTitle = signal<string>('Tickets');
 
   protected readonly statuses = TICKET_STATUSES;
   protected readonly priorities = TICKET_PRIORITIES;
@@ -66,6 +73,13 @@ export class TicketsListPage implements OnInit {
   protected readonly activeFilterLabel = signal<string | null>(null);
 
   ngOnInit(): void {
+    this.route.data.subscribe((data) => {
+      const m = (data as { mode?: ListMode }).mode ?? 'all';
+      this.mode.set(m);
+      this.pageTitle.set(
+        m === 'queue' ? 'Unassigned queue' : m === 'my' ? 'My tickets' : 'Tickets',
+      );
+    });
     this.route.queryParamMap.subscribe((params) => {
       const status = params.get('status') as TicketStatus | null;
       const statusIn = params.get('statusIn');
@@ -82,6 +96,8 @@ export class TicketsListPage implements OnInit {
       else if (statusIn) label = `Active statuses (${statusIn.split(',').length})`;
       this.activeFilterLabel.set(label);
 
+      const m = this.mode();
+      const currentUserId = this.auth.user()?.id;
       void this.store.loadList({
         page: 1,
         pageSize: 20,
@@ -90,6 +106,8 @@ export class TicketsListPage implements OnInit {
         breached: breached || undefined,
         priority: priority ?? undefined,
         search: search ?? undefined,
+        unassigned: m === 'queue' ? true : undefined,
+        assigneeId: m === 'my' && currentUserId ? currentUserId : undefined,
       });
     });
   }

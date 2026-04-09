@@ -70,7 +70,8 @@
   flex: 1;
 }
 
-.user-meta {
+.user-meta,
+.user-meta-btn {
   display: inline-flex;
   align-items: center;
   font-size: 0.82rem;
@@ -79,6 +80,17 @@
   border-radius: 999px;
   background: rgb(255 255 255 / 12%);
   border: 1px solid rgb(255 255 255 / 18%);
+  text-transform: none;
+  letter-spacing: normal;
+  min-width: 0;
+}
+
+.user-meta-btn:hover {
+  background: rgb(255 255 255 / 22%);
+}
+
+.user-meta-btn.active {
+  background: rgb(255 255 255 / 28%);
 }
 
 @media (max-width: 768px) {

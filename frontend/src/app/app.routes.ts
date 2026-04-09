@@ -17,6 +17,26 @@ export const routes: Routes = [
     canActivate: [authGuard],
     loadComponent: () =>
       import('./features/tickets/tickets-list.page').then((m) => m.TicketsListPage),
+    data: { mode: 'all' },
+  },
+  {
+    path: 'queue',
+    canActivate: [authGuard, roleGuard(['ADMIN', 'TEAM_LEAD', 'AGENT'])],
+    loadComponent: () =>
+      import('./features/tickets/tickets-list.page').then((m) => m.TicketsListPage),
+    data: { mode: 'queue' },
+  },
+  {
+    path: 'my-tickets',
+    canActivate: [authGuard, roleGuard(['ADMIN', 'TEAM_LEAD', 'AGENT'])],
+    loadComponent: () =>
+      import('./features/tickets/tickets-list.page').then((m) => m.TicketsListPage),
+    data: { mode: 'my' },
+  },
+  {
+    path: 'profile',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/profile/profile.page').then((m) => m.ProfilePage),
   },
   {
     path: 'tickets/:id',

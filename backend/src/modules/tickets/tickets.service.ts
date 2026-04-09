@@ -80,7 +80,8 @@ export class TicketsService {
     }
     if (query.breached) where.breachedAt = { not: null };
     if (query.priority) where.priority = query.priority;
-    if (query.assigneeId) where.assigneeId = query.assigneeId;
+    if (query.unassigned) where.assigneeId = null;
+    else if (query.assigneeId) where.assigneeId = query.assigneeId;
     if (query.search) {
       where.OR = [
         { title: { contains: query.search, mode: 'insensitive' } },

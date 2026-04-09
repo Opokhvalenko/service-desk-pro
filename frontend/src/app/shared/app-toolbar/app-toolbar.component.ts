@@ -6,7 +6,15 @@ import { Router } from '@angular/router';
 import { AuthStore } from '../../core/auth/auth.store';
 import { NotificationsBellComponent } from '../notifications-bell/notifications-bell.component';
 
-export type ToolbarSection = 'dashboard' | 'tickets' | 'detail' | 'admin' | 'reports';
+export type ToolbarSection =
+  | 'dashboard'
+  | 'tickets'
+  | 'detail'
+  | 'admin'
+  | 'reports'
+  | 'queue'
+  | 'my-tickets'
+  | 'profile';
 
 @Component({
   selector: 'app-toolbar',
@@ -41,6 +49,28 @@ export type ToolbarSection = 'dashboard' | 'tickets' | 'detail' | 'admin' | 'rep
           <mat-icon>confirmation_number</mat-icon>
           Tickets
         </button>
+        @if (auth.role() === 'AGENT' || auth.role() === 'TEAM_LEAD' || auth.role() === 'ADMIN') {
+          <button
+            mat-button
+            type="button"
+            class="nav-link"
+            [class.active]="active() === 'queue'"
+            (click)="go('/queue')"
+          >
+            <mat-icon>inbox</mat-icon>
+            Queue
+          </button>
+          <button
+            mat-button
+            type="button"
+            class="nav-link"
+            [class.active]="active() === 'my-tickets'"
+            (click)="go('/my-tickets')"
+          >
+            <mat-icon>assignment_ind</mat-icon>
+            My tickets
+          </button>
+        }
         @if (auth.role() === 'ADMIN' || auth.role() === 'TEAM_LEAD') {
           <button
             mat-button
@@ -67,7 +97,15 @@ export type ToolbarSection = 'dashboard' | 'tickets' | 'detail' | 'admin' | 'rep
         }
       </nav>
       <span class="spacer"></span>
-      <span class="user-meta">{{ auth.user()?.fullName }} · {{ auth.role() }}</span>
+      <button
+        mat-button
+        type="button"
+        class="user-meta-btn"
+        [class.active]="active() === 'profile'"
+        (click)="go('/profile')"
+      >
+        {{ auth.user()?.fullName }} · {{ auth.role() }}
+      </button>
       <app-notifications-bell />
       <button
         mat-icon-button
@@ -98,12 +136,26 @@ export type ToolbarSection = 'dashboard' | 'tickets' | 'detail' | 'admin' | 'rep
           <mat-icon>confirmation_number</mat-icon>
           <span>Tickets</span>
         </button>
+        @if (auth.role() === 'AGENT' || auth.role() === 'TEAM_LEAD' || auth.role() === 'ADMIN') {
+          <button mat-menu-item type="button" (click)="go('/queue')">
+            <mat-icon>inbox</mat-icon>
+            <span>Queue</span>
+          </button>
+          <button mat-menu-item type="button" (click)="go('/my-tickets')">
+            <mat-icon>assignment_ind</mat-icon>
+            <span>My tickets</span>
+          </button>
+        }
         @if (auth.role() === 'ADMIN' || auth.role() === 'TEAM_LEAD') {
           <button mat-menu-item type="button" (click)="go('/reports')">
             <mat-icon>bar_chart</mat-icon>
             <span>Reports</span>
           </button>
         }
+        <button mat-menu-item type="button" (click)="go('/profile')">
+          <mat-icon>person</mat-icon>
+          <span>Profile</span>
+        </button>
         @if (auth.role() === 'ADMIN') {
           <button mat-menu-item type="button" (click)="go('/admin/users')">
             <mat-icon>admin_panel_settings</mat-icon>

@@ -15,7 +15,7 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { CookieOptions, Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { CurrentUser, Public } from './decorators';
-import { LoginDto, RegisterDto } from './dto';
+import { ChangePasswordDto, LoginDto, RegisterDto } from './dto';
 import { JwtAuthGuard } from './guards';
 import type { AuthenticatedUser, TokenPair } from './types/auth.types';
 
@@ -81,6 +81,20 @@ export class AuthController {
   async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     const raw = (req.cookies as Record<string, string> | undefined)?.[REFRESH_COOKIE];
     await this.auth.logout(raw);
+    res.clearCookie(REFRESH_COOKIE, this.cookieOptions());
+  }
+
+  @Post('change-password')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Change current user password' })
+  async changePassword(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: ChangePasswordDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<void> {
+    await this.auth.changePassword(user.id, dto.currentPassword, dto.newPassword);
     res.clearCookie(REFRESH_COOKIE, this.cookieOptions());
   }
 
