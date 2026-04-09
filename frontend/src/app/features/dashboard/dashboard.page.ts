@@ -10,6 +10,7 @@ import { AuthStore } from '../../core/auth/auth.store';
 import { StatsService } from '../../core/stats/stats.service';
 import type { DashboardStats } from '../../core/stats/stats.types';
 import { AppToolbarComponent } from '../../shared/app-toolbar/app-toolbar.component';
+import { SkeletonComponent } from '../../shared/skeleton/skeleton.component';
 
 const STATUS_COLORS: Record<string, string> = {
   NEW: '#6366f1',
@@ -39,6 +40,7 @@ const PRIORITY_COLORS: Record<string, string> = {
     MatProgressSpinnerModule,
     BaseChartDirective,
     AppToolbarComponent,
+    SkeletonComponent,
   ],
   templateUrl: './dashboard.page.html',
   styleUrl: './dashboard.page.scss',
