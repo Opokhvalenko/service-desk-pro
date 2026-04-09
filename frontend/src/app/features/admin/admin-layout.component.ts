@@ -17,6 +17,18 @@ import { AppToolbarComponent } from '../../shared/app-toolbar/app-toolbar.compon
             <mat-icon>group</mat-icon>
             <span>Users</span>
           </a>
+          <a routerLink="/admin/categories" routerLinkActive="active" class="side-link">
+            <mat-icon>category</mat-icon>
+            <span>Categories</span>
+          </a>
+          <a routerLink="/admin/teams" routerLinkActive="active" class="side-link">
+            <mat-icon>groups</mat-icon>
+            <span>Teams</span>
+          </a>
+          <a routerLink="/admin/sla" routerLinkActive="active" class="side-link">
+            <mat-icon>schedule</mat-icon>
+            <span>SLA policies</span>
+          </a>
         </nav>
       </aside>
       <main class="admin-main">

@@ -11,12 +11,14 @@ import { PrismaModule } from './infrastructure/prisma/prisma.module';
 import { RedisModule } from './infrastructure/redis/redis.module';
 import { AttachmentsModule } from './modules/attachments/attachments.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { CategoriesModule } from './modules/categories/categories.module';
 import { HealthModule } from './modules/health/health.module';
 import { MailModule } from './modules/mail/mail.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { RealtimeModule } from './modules/realtime/realtime.module';
 import { SlaModule } from './modules/sla/sla.module';
 import { StatsModule } from './modules/stats/stats.module';
+import { TeamsModule } from './modules/teams/teams.module';
 import { TicketsModule } from './modules/tickets/tickets.module';
 import { UsersModule } from './modules/users/users.module';
 
@@ -50,6 +52,8 @@ import { UsersModule } from './modules/users/users.module';
     CloudinaryModule,
     AuthModule,
     UsersModule,
+    CategoriesModule,
+    TeamsModule,
     SlaModule,
     TicketsModule,
     AttachmentsModule,

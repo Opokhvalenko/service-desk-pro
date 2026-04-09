@@ -36,6 +36,20 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/admin/admin-users.page').then((m) => m.AdminUsersPage),
       },
+      {
+        path: 'categories',
+        loadComponent: () =>
+          import('./features/admin/admin-categories.page').then((m) => m.AdminCategoriesPage),
+      },
+      {
+        path: 'teams',
+        loadComponent: () =>
+          import('./features/admin/admin-teams.page').then((m) => m.AdminTeamsPage),
+      },
+      {
+        path: 'sla',
+        loadComponent: () => import('./features/admin/admin-sla.page').then((m) => m.AdminSlaPage),
+      },
     ],
   },
   { path: '', pathMatch: 'full', redirectTo: 'tickets' },

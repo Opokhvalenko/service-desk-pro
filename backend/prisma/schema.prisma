@@ -48,6 +48,8 @@ model User {
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 
+  teamId        String?
+
   refreshTokens     RefreshToken[]
   createdTickets    Ticket[]        @relation("TicketCreatedBy")
   assignedTickets   Ticket[]        @relation("TicketAssignedTo")
@@ -55,9 +57,42 @@ model User {
   auditLogs         AuditLog[]
   notifications     Notification[]
   attachments       Attachment[]
+  team              Team?           @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  ledTeams          Team[]          @relation("TeamLead")
 
   @@index([role])
+  @@index([teamId])
   @@map("users")
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tickets Ticket[]
+
+  @@map("categories")
+}
+
+model Team {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  leadId      String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  lead    User?  @relation("TeamLead", fields: [leadId], references: [id], onDelete: SetNull)
+  members User[]
+  tickets Ticket[]
+
+  @@index([leadId])
+  @@map("teams")
 }
 
 model Ticket {
@@ -69,6 +104,8 @@ model Ticket {
   priority     TicketPriority @default(MEDIUM)
   createdById  String
   assigneeId   String?
+  categoryId   String?
+  teamId       String?
   resolvedAt   DateTime?
   closedAt     DateTime?
 
@@ -85,6 +122,8 @@ model Ticket {
 
   createdBy   User            @relation("TicketCreatedBy", fields: [createdById], references: [id])
   assignee    User?           @relation("TicketAssignedTo", fields: [assigneeId], references: [id])
+  category    Category?       @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  team        Team?           @relation(fields: [teamId], references: [id], onDelete: SetNull)
   comments    TicketComment[]
   attachments Attachment[]
 
@@ -95,6 +134,8 @@ model Ticket {
   @@index([createdAt])
   @@index([resolveDueAt])
   @@index([breachedAt])
+  @@index([categoryId])
+  @@index([teamId])
   @@map("tickets")
 }
 

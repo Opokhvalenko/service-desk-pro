@@ -5,6 +5,8 @@ import { PrismaModule } from '../../infrastructure/prisma/prisma.module';
 import { SLA_QUEUE, SlaProcessor } from './sla.processor';
 import { SlaScheduler } from './sla.scheduler';
 import { SlaService } from './sla.service';
+import { SlaPoliciesController } from './sla-policies.controller';
+import { SlaPoliciesService } from './sla-policies.service';
 
 @Module({
   imports: [
@@ -28,7 +30,8 @@ import { SlaService } from './sla.service';
     }),
     BullModule.registerQueue({ name: SLA_QUEUE }),
   ],
-  providers: [SlaService, SlaProcessor, SlaScheduler],
+  controllers: [SlaPoliciesController],
+  providers: [SlaService, SlaPoliciesService, SlaProcessor, SlaScheduler],
   exports: [SlaService],
 })
 export class SlaModule {}

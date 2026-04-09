@@ -106,6 +106,7 @@ const ROLES: UserRole[] = ['ADMIN', 'TEAM_LEAD', 'AGENT', 'REQUESTER'];
         flex-direction: column;
         gap: 0.5rem;
         min-width: 24rem;
+        padding-top: 0.75rem;
       }
     `,
   ],
