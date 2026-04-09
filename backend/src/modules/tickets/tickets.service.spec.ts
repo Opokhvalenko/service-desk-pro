@@ -11,6 +11,7 @@ const makePrismaMock = () => ({
     findUnique: jest.fn(),
     findUniqueOrThrow: jest.fn(),
     update: jest.fn(),
+    updateMany: jest.fn(),
     count: jest.fn(),
   },
   ticketComment: { create: jest.fn() },
@@ -112,10 +113,16 @@ describe('TicketsService', () => {
 
     it('emits status_changed event and calls sla.onStatusChange on valid transition', async () => {
       prisma.ticket.findUnique.mockResolvedValue({ ...baseTicket, status: 'NEW' });
-      prisma.ticket.update.mockResolvedValue({ ...baseTicket, status: 'OPEN' });
+      // Optimistic concurrency: updateMany with status guard returns count=1
+      // on success, then findUniqueOrThrow returns the fresh row.
+      prisma.ticket.updateMany.mockResolvedValue({ count: 1 });
+      prisma.ticket.findUniqueOrThrow.mockResolvedValue({ ...baseTicket, status: 'OPEN' });
 
       await service.changeStatus('t1', { status: 'OPEN' }, agent);
 
+      expect(prisma.ticket.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: 't1', status: 'NEW' } }),
+      );
       expect(sla.onStatusChange).toHaveBeenCalledWith('t1', 'NEW', 'OPEN');
       expect(events.emit).toHaveBeenCalledWith(
         'ticket.status_changed',
