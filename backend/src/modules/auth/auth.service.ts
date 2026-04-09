@@ -1,5 +1,10 @@
 import { createHash, randomBytes } from 'node:crypto';
-import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import type { User, UserRole } from '@prisma/client';
@@ -40,6 +45,26 @@ export class AuthService {
 
     const tokens = await this.issueTokens(user, meta);
     return { user: this.toAuthUser(user), tokens };
+  }
+
+  async changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<void> {
+    if (newPassword.length < 8) {
+      throw new BadRequestException('New password must be at least 8 characters');
+    }
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new UnauthorizedException('User not found');
+    const ok = await argon2.verify(user.passwordHash, currentPassword);
+    if (!ok) throw new UnauthorizedException('Current password is incorrect');
+    const passwordHash = await argon2.hash(newPassword, { type: argon2.argon2id });
+    await this.prisma.user.update({ where: { id: userId }, data: { passwordHash } });
+    await this.prisma.refreshToken.updateMany({
+      where: { userId, revokedAt: null },
+      data: { revokedAt: new Date() },
+    });
   }
 
   async login(

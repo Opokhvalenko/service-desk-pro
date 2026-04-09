@@ -1,6 +1,11 @@
-<app-toolbar active="tickets" />
+<app-toolbar [active]="mode() === 'queue' ? 'queue' : mode() === 'my' ? 'my-tickets' : 'tickets'" />
 
 <main class="page">
+  @if (mode() !== 'all') {
+    <header class="page-head">
+      <h1>{{ pageTitle() }}</h1>
+    </header>
+  }
   @if (activeFilterLabel(); as label) {
     <div class="active-filter-banner">
       <mat-icon>filter_alt</mat-icon>

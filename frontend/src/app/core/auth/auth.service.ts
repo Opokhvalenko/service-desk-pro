@@ -30,4 +30,14 @@ export class AuthService {
   me(): Promise<{ user: AuthResponse['user'] }> {
     return firstValueFrom(this.http.post<{ user: AuthResponse['user'] }>(`${this.base}/me`, {}));
   }
+
+  changePassword(currentPassword: string, newPassword: string): Promise<void> {
+    return firstValueFrom(
+      this.http.post<void>(
+        `${this.base}/change-password`,
+        { currentPassword, newPassword },
+        { withCredentials: true },
+      ),
+    );
+  }
 }

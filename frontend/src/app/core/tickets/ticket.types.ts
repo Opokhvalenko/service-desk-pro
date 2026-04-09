@@ -66,6 +66,7 @@ export interface ListTicketsQuery {
   breached?: boolean;
   priority?: TicketPriority;
   assigneeId?: string;
+  unassigned?: boolean;
   search?: string;
   page?: number;
   pageSize?: number;

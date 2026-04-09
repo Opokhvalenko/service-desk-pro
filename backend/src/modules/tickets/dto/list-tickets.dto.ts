@@ -25,6 +25,11 @@ export class ListTicketsQueryDto {
   assigneeId?: string;
 
   @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
+  @IsBoolean()
+  unassigned?: boolean;
+
+  @IsOptional()
   @IsString()
   search?: string;
 
