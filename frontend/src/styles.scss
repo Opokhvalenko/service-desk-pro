@@ -133,3 +133,10 @@ textarea.mat-mdc-input-element {
   padding: 0.5rem 0.85rem !important;
   white-space: normal !important;
 }
+
+// Material dialog content — make room for first floating label notch
+// (default overflow:auto + tight padding-top clips outline label of first field)
+.mat-mdc-dialog-content {
+  padding-top: 1.25rem !important;
+  overflow-x: hidden;
+}
