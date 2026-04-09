@@ -116,33 +116,49 @@
     </section>
 
     <section class="charts">
-      <mat-card appearance="outlined" class="chart-card">
-        <mat-card-header>
-          <mat-card-title>Status distribution</mat-card-title>
-        </mat-card-header>
-        <mat-card-content class="chart-wrap">
-          <canvas
-            baseChart
-            [type]="statusChartType"
-            [data]="statusChartData()"
-            [options]="chartOptions"
-          ></canvas>
-        </mat-card-content>
-      </mat-card>
+      @defer (on viewport) {
+        <mat-card appearance="outlined" class="chart-card">
+          <mat-card-header>
+            <mat-card-title>Status distribution</mat-card-title>
+          </mat-card-header>
+          <mat-card-content class="chart-wrap">
+            <canvas
+              baseChart
+              [type]="statusChartType"
+              [data]="statusChartData()"
+              [options]="chartOptions"
+            ></canvas>
+          </mat-card-content>
+        </mat-card>
+      } @placeholder {
+        <mat-card appearance="outlined" class="chart-card">
+          <mat-card-content class="chart-wrap">
+            <app-skeleton height="16rem" />
+          </mat-card-content>
+        </mat-card>
+      }
 
-      <mat-card appearance="outlined" class="chart-card">
-        <mat-card-header>
-          <mat-card-title>By priority</mat-card-title>
-        </mat-card-header>
-        <mat-card-content class="chart-wrap">
-          <canvas
-            baseChart
-            [type]="priorityChartType"
-            [data]="priorityChartData()"
-            [options]="chartOptions"
-          ></canvas>
-        </mat-card-content>
-      </mat-card>
+      @defer (on viewport) {
+        <mat-card appearance="outlined" class="chart-card">
+          <mat-card-header>
+            <mat-card-title>By priority</mat-card-title>
+          </mat-card-header>
+          <mat-card-content class="chart-wrap">
+            <canvas
+              baseChart
+              [type]="priorityChartType"
+              [data]="priorityChartData()"
+              [options]="chartOptions"
+            ></canvas>
+          </mat-card-content>
+        </mat-card>
+      } @placeholder {
+        <mat-card appearance="outlined" class="chart-card">
+          <mat-card-content class="chart-wrap">
+            <app-skeleton height="16rem" />
+          </mat-card-content>
+        </mat-card>
+      }
     </section>
     }
   }

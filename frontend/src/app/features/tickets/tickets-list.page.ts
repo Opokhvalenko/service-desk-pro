@@ -21,6 +21,7 @@ import {
 } from '../../core/tickets/ticket.types';
 import { TicketsStore } from '../../core/tickets/tickets.store';
 import { AppToolbarComponent } from '../../shared/app-toolbar/app-toolbar.component';
+import { SkeletonComponent } from '../../shared/skeleton/skeleton.component';
 import { CreateTicketDialog } from './create-ticket.dialog';
 
 type ListMode = 'all' | 'queue' | 'my';
@@ -42,6 +43,7 @@ type ListMode = 'all' | 'queue' | 'my';
     MatChipsModule,
     MatProgressSpinnerModule,
     MatDialogModule,
+    SkeletonComponent,
   ],
   templateUrl: './tickets-list.page.html',
   styleUrl: './tickets-list.page.scss',

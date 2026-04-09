@@ -30,7 +30,8 @@
               }
             ],
             "styles": ["src/tailwind.css", "src/styles.scss"],
-            "polyfills": ["@angular/localize/init"]
+            "polyfills": ["@angular/localize/init"],
+            "serviceWorker": "ngsw-config.json"
           },
           "configurations": {
             "production": {
