@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
@@ -33,11 +34,30 @@ const TICKET_INCLUDE = {
 
 @Injectable()
 export class TicketsService {
+  private readonly logger = new Logger(TicketsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly events: EventEmitter2,
     private readonly sla: SlaService,
   ) {}
+
+  /**
+   * Wraps `EventEmitter2.emit` so a crashing listener never breaks the
+   * write-path that fired the event. The ticket has already been persisted at
+   * this point — we just want to broadcast best-effort and log if the
+   * downstream notification/audit/realtime listener throws.
+   */
+  private safeEmit(event: string, payload: unknown): void {
+    try {
+      this.events.emit(event, payload);
+    } catch (err) {
+      this.logger.error(
+        `Listener for ${event} threw: ${(err as Error).message}`,
+        (err as Error).stack,
+      );
+    }
+  }
 
   async create(dto: CreateTicketDto, user: AuthenticatedUser) {
     const ticket = await this.prisma.ticket.create({
@@ -57,7 +77,7 @@ export class TicketsService {
       number: ticket.number,
       createdById: user.id,
     };
-    this.events.emit(TICKET_EVENTS.CREATED, created);
+    this.safeEmit(TICKET_EVENTS.CREATED, created);
 
     const fresh = await this.prisma.ticket.findUniqueOrThrow({
       where: { id: ticket.id },
@@ -185,7 +205,7 @@ export class TicketsService {
       to: dto.status,
       actorId: user.id,
     };
-    this.events.emit(TICKET_EVENTS.STATUS_CHANGED, payload);
+    this.safeEmit(TICKET_EVENTS.STATUS_CHANGED, payload);
     return this.serialize(ticket);
   }
 
@@ -234,7 +254,7 @@ export class TicketsService {
       assigneeId: dto.assigneeId ?? null,
       actorId: user.id,
     };
-    this.events.emit(TICKET_EVENTS.ASSIGNED, payload);
+    this.safeEmit(TICKET_EVENTS.ASSIGNED, payload);
     return this.serialize(ticket);
   }
 
@@ -264,7 +284,7 @@ export class TicketsService {
       authorId: user.id,
       isInternal,
     };
-    this.events.emit(TICKET_EVENTS.COMMENT_ADDED, payload);
+    this.safeEmit(TICKET_EVENTS.COMMENT_ADDED, payload);
     return comment;
   }
 

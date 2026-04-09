@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, inject, type OnInit, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  inject,
+  type OnInit,
+  signal,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
@@ -166,6 +174,7 @@ export class AdminTeamsPage implements OnInit {
   private readonly api = inject(TeamsService);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(MatSnackBar);
+  private readonly destroyRef = inject(DestroyRef);
 
   protected readonly teams = signal<AdminTeam[]>([]);
   protected readonly loading = signal(true);
@@ -193,21 +202,24 @@ export class AdminTeamsPage implements OnInit {
       width: '30rem',
       data: { team: null },
     });
-    ref.afterClosed().subscribe(async (result: TeamFormResult | undefined) => {
-      if (!result) return;
-      try {
-        await this.api.create({
-          name: result.name,
-          description: result.description || undefined,
-          leadId: result.leadId ?? undefined,
-          isActive: result.isActive,
-        });
-        this.snack.open('Team created', 'Close', { duration: 2500 });
-        await this.reload();
-      } catch {
-        this.snack.open('Failed to create team', 'Close', { duration: 3000 });
-      }
-    });
+    ref
+      .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(async (result: TeamFormResult | undefined) => {
+        if (!result) return;
+        try {
+          await this.api.create({
+            name: result.name,
+            description: result.description || undefined,
+            leadId: result.leadId ?? undefined,
+            isActive: result.isActive,
+          });
+          this.snack.open('Team created', 'Close', { duration: 2500 });
+          await this.reload();
+        } catch {
+          this.snack.open('Failed to create team', 'Close', { duration: 3000 });
+        }
+      });
   }
 
   protected openEdit(team: AdminTeam): void {
@@ -215,21 +227,24 @@ export class AdminTeamsPage implements OnInit {
       width: '30rem',
       data: { team },
     });
-    ref.afterClosed().subscribe(async (result: TeamFormResult | undefined) => {
-      if (!result) return;
-      try {
-        await this.api.update(team.id, {
-          name: result.name,
-          description: result.description || undefined,
-          leadId: result.leadId,
-          isActive: result.isActive,
-        });
-        this.snack.open('Team updated', 'Close', { duration: 2500 });
-        await this.reload();
-      } catch {
-        this.snack.open('Failed to update team', 'Close', { duration: 3000 });
-      }
-    });
+    ref
+      .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(async (result: TeamFormResult | undefined) => {
+        if (!result) return;
+        try {
+          await this.api.update(team.id, {
+            name: result.name,
+            description: result.description || undefined,
+            leadId: result.leadId,
+            isActive: result.isActive,
+          });
+          this.snack.open('Team updated', 'Close', { duration: 2500 });
+          await this.reload();
+        } catch {
+          this.snack.open('Failed to update team', 'Close', { duration: 3000 });
+        }
+      });
   }
 
   protected async deactivate(team: AdminTeam): Promise<void> {

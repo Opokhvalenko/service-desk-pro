@@ -1,5 +1,13 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject, type OnInit, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  inject,
+  type OnInit,
+  signal,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
@@ -54,6 +62,7 @@ export class TicketsListPage implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly dialog = inject(MatDialog);
   private readonly auth = inject(AuthStore);
+  private readonly destroyRef = inject(DestroyRef);
 
   protected readonly mode = signal<ListMode>('all');
   protected readonly pageTitle = signal<string>('Tickets');
@@ -75,14 +84,14 @@ export class TicketsListPage implements OnInit {
   protected readonly activeFilterLabel = signal<string | null>(null);
 
   ngOnInit(): void {
-    this.route.data.subscribe((data) => {
+    this.route.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((data) => {
       const m = (data as { mode?: ListMode }).mode ?? 'all';
       this.mode.set(m);
       this.pageTitle.set(
         m === 'queue' ? 'Unassigned queue' : m === 'my' ? 'My tickets' : 'Tickets',
       );
     });
-    this.route.queryParamMap.subscribe((params) => {
+    this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
       const status = params.get('status') as TicketStatus | null;
       const statusIn = params.get('statusIn');
       const breached = params.get('breached') === 'true';
@@ -144,9 +153,12 @@ export class TicketsListPage implements OnInit {
 
   protected openCreateDialog(): void {
     const ref = this.dialog.open(CreateTicketDialog, { width: '32rem' });
-    ref.afterClosed().subscribe((created) => {
-      if (created) void this.store.loadList(this.store.query());
-    });
+    ref
+      .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((created) => {
+        if (created) void this.store.loadList(this.store.query());
+      });
   }
 
   protected statusClass(status: TicketStatus): string {
