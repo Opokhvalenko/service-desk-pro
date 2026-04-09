@@ -10,7 +10,7 @@
 
 ## Demo
 
-[Live Demo](https://service-desk-pro-sepia.vercel.app) | [API Docs](https://service-desk-pro-backend.onrender.com/api/v1/docs) | [Health](https://service-desk-pro-backend.onrender.com/api/v1/health/ready)
+[Live Demo](https://service-desk-pro-sepia.vercel.app) | [API Docs](https://service-desk-pro-backend.onrender.com/api/v1/docs) | [Health](https://service-desk-pro-backend.onrender.com/api/v1/health/ready) | [Technical Challenges](./CHALLENGES.md)
 
 > **Note:** Backend is hosted on Render free tier — the first request after
 > 15 minutes of inactivity may take 30–60 seconds to wake up. Demo data
