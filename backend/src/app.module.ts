@@ -17,6 +17,7 @@ import { HealthModule } from './modules/health/health.module';
 import { MailModule } from './modules/mail/mail.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { RealtimeModule } from './modules/realtime/realtime.module';
+import { ReportsModule } from './modules/reports/reports.module';
 import { SlaModule } from './modules/sla/sla.module';
 import { StatsModule } from './modules/stats/stats.module';
 import { TeamsModule } from './modules/teams/teams.module';
@@ -60,6 +61,7 @@ import { UsersModule } from './modules/users/users.module';
     AttachmentsModule,
     AuditModule,
     StatsModule,
+    ReportsModule,
     MailModule,
     NotificationsModule,
     RealtimeModule,
