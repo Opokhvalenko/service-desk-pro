@@ -380,6 +380,63 @@ your projects break".
 
 ---
 
+## 12. Cron seed workflow failing on Neon cold start
+
+**Problem:** A nightly GitHub Actions cron (`seed-reset.yml`) had been
+green for 5 days running the Prisma seed against Neon Postgres. Then on
+two consecutive nights it failed with `PrismaClientInitializationError:
+Can't reach database server at ep-...-pooler.eu-central-1.aws.neon.tech`.
+No code changes, no secret changes. A manual `workflow_dispatch` run
+the same morning passed in 33s.
+
+**Root cause:** Neon's free-tier compute auto-suspends after ~5 minutes
+of inactivity. The cron fires at 03:00 UTC, when the DB has been idle
+all night. The cold-start handshake on a suspended compute can take
+20–60 seconds, but Prisma's default `connect_timeout` is roughly 10s,
+so the very first connection attempt times out before Neon finishes
+waking. The manual run worked because opening the Neon dashboard had
+already warmed the compute.
+
+**Solution:** Add a "Wake up Neon" step before the seed step that pings
+the DB with `SELECT 1;` in a retry loop:
+
+```yaml
+- name: Wake up Neon (handle cold start)
+  env:
+    DATABASE_URL: ${{ secrets.DATABASE_URL }}
+    DIRECT_URL: ${{ secrets.DIRECT_URL }}
+  run: |
+    for i in 1 2 3 4 5; do
+      echo "Attempt $i: pinging Neon..."
+      if npx prisma db execute --schema=prisma/schema.prisma --stdin <<< "SELECT 1;"; then
+        echo "Neon is warm"
+        exit 0
+      fi
+      echo "Cold start in progress, retrying in 10s..."
+      sleep 10
+    done
+    echo "Neon did not respond after 5 attempts"
+    exit 1
+```
+
+Two non-obvious details that bit me during iteration:
+- `prisma db execute` does not auto-detect `prisma/schema.prisma` the
+  way `prisma migrate` does — `--schema` must be passed explicitly.
+- Schema validation happens before the SQL ping, so any env var
+  referenced in `schema.prisma` (here both `DATABASE_URL` and
+  `DIRECT_URL`) must be present in the step's `env:` block, otherwise
+  Prisma fails with `P1012 Environment variable not found` before it
+  ever tries to reach the database.
+
+**Takeaway:** Free-tier serverless databases trade cost for cold-start
+latency, and CI cron jobs run at exactly the time when latency is
+worst. When something flakes only at scheduled times but works on
+manual triggers, suspect timing/state, not the code. The pre-warm
+pattern (ping + retry before the real work) is cheap insurance worth
+adding to any cron that touches a serverless DB.
+
+---
+
 ## What didn't make this list
 
 A few things I considered but left out — they're either covered in the ADRs
