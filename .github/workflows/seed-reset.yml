@@ -42,7 +42,7 @@ jobs:
         run: |
           for i in 1 2 3 4 5; do
             echo "Attempt $i: pinging Neon..."
-            if npx prisma db execute --stdin <<< "SELECT 1;"; then
+            if npx prisma db execute --schema=prisma/schema.prisma --stdin <<< "SELECT 1;"; then
               echo "Neon is warm"
               exit 0
             fi
