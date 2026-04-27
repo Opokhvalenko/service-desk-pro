@@ -39,6 +39,7 @@ jobs:
       - name: Wake up Neon (handle cold start)
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
         run: |
           for i in 1 2 3 4 5; do
             echo "Attempt $i: pinging Neon..."
